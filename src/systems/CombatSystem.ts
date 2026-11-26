@@ -33,6 +33,12 @@ const DEATH_PARTICLES: Record<string, ParticleKind> = {
   king: 'king',
 };
 
+const EXPLOSION_THEME = {
+  void: { fill: 0xb05cff, ring: 0xe0b3ff },
+  blood: { fill: 0xc81e34, ring: 0xff8a8a },
+  frost: { fill: 0x6fe3ff, ring: 0xd4f7ff },
+} as const;
+
 export class CombatSystem {
   private tmp: Enemy[] = [];
 
@@ -107,7 +113,7 @@ export class CombatSystem {
     if (heal > 1.5 && w.rng.chance(0.3)) w.effects.burst('blood', p.x, p.y - 12, 2);
   }
 
-  private applyFrostbite(p: Player, e: Enemy, w: World): void {
+  applyFrostbite(p: Player, e: Enemy, w: World): void {
     if (p.def.id !== 'frost_witch' || e.isFrozenAt(w.time)) return;
     const fp = this.passiveParams(p);
     if (e.frostUntil < w.time) e.frostStacks = 0;
@@ -180,14 +186,15 @@ export class CombatSystem {
   }
 
   /** Area damage used by orbs, collapses, resonance. `exclude` already took the direct hit. */
-  explode(x: number, y: number, radius: number, damage: number, owner: Player | null, abilityId: string, exclude?: Enemy): void {
+  explode(x: number, y: number, radius: number, damage: number, owner: Player | null, abilityId: string, exclude?: Enemy, theme: 'void' | 'blood' | 'frost' = 'void'): void {
     const w = this.world();
     if (radius <= 0) return;
     const r = radius * (owner?.stats.area ?? 1);
-    w.effects.circle(x, y, r * 0.3, r, 0xb05cff, 0.22, 0.45);
-    w.effects.ring(x, y, r * 0.4, r, 0xe0b3ff, 0.25, 2);
-    w.effects.burst('void', x, y, 10);
-    w.effects.flashLight(x, y, 0xb05cff, r * 1.2, 200);
+    const t = EXPLOSION_THEME[theme];
+    w.effects.circle(x, y, r * 0.3, r, t.fill, 0.22, 0.45);
+    w.effects.ring(x, y, r * 0.4, r, t.ring, 0.25, 2);
+    w.effects.burst(theme, x, y, 10);
+    w.effects.flashLight(x, y, t.fill, r * 1.2, 200);
     audio.play('explosion', { volume: 0.6 });
     this.tmp.length = 0;
     for (const e of w.enemyGrid.queryCircle(x, y, r + 8, this.tmp)) {
@@ -201,6 +208,7 @@ export class CombatSystem {
     const w = this.world();
     if (e.dying) return;
     const credited = killer ?? e.lastHitBy;
+    const wasBleeding = e.bleeds.length > 0;
     e.kill();
     const theme = DEATH_PARTICLES[e.def.deathTheme] ?? 'void';
     w.effects.burst(theme, e.x, e.y - 6, e.isElite || e.isBoss ? 40 : 10);
@@ -216,12 +224,22 @@ export class CombatSystem {
       credited.kills++;
       credited.addUltCharge(e.def.xp * 0.8);
       this.voidResonance(credited, e, w);
+      if (wasBleeding && credited.def.id === 'blood_reaper' && this.passiveFlags(credited).includes('geyser')) this.bloodGeyser(credited, e.x, e.y, w);
     }
     if (e.isElite) {
       w.effects.shake(0.006, 250);
       w.effects.ring(e.x, e.y - 10, 8, 70, 0xff66cc, 0.6, 3);
     }
     w.scene.events.emit('enemy-killed', e, credited);
+  }
+
+  /** Fusion "Blood Geyser": a bleeding enemy erupts on death. */
+  private bloodGeyser(p: Player, x: number, y: number, w: World): void {
+    w.effects.burst('blood', x, y - 4, 22, { angle: -Math.PI / 2, spread: 0.35 });
+    w.effects.burst('blood', x, y - 4, 10);
+    w.effects.beam(x, y, x, y - 34, 0xff3344, 6, 0.3);
+    this.explode(x, y - 4, 30, 16 * p.stats.damage, p, 'blood_geyser', undefined, 'blood');
+    p.heal(1.5 * p.stats.healing, w, false);
   }
 
   private voidResonance(p: Player, e: Enemy, w: World): void {
