@@ -9,6 +9,7 @@ import type { Enemy } from '../entities/Enemy';
 import type { World } from './World';
 import { ARENA } from '../game/GameConfig';
 import { dist2 } from '../core/math';
+import { onMindLashHit } from './abilities/psychic';
 
 export class ProjectileSystem {
   readonly group: Phaser.Physics.Arcade.Group;
@@ -48,12 +49,18 @@ export class ProjectileSystem {
       if (p.trail) {
         p.trailTimer -= dt;
         if (p.trailTimer <= 0) {
-          p.trailTimer = 0.03;
-          w.effects.burst(p.trail, p.x, p.y, 1);
+          p.trailTimer = p.trailEvery;
+          w.effects.burst(p.trail, p.x, p.y, p.trailCount);
         }
       }
+      if (p.glow) p.glow.setPosition(p.x, p.y);
+      if (p.flags.has('singularity')) this.drag(p, dt, w);
       if (p.traveled >= p.range || p.x < b.x - 20 || p.y < b.y - 40 || p.x > b.x + b.w + 20 || p.y > b.y + b.h + 20) {
         if (p.team === 'player' && p.flags.has('explode') && p.abilityId === 'void_orb') w.combat.explode(p.x, p.y, p.explosionRadius, p.damage * p.explosionDamage, p.owner, p.abilityId);
+        if (p.team === 'player' && p.flags.has('endBlast')) {
+          w.combat.explode(p.x, p.y, p.explosionRadius, p.damage * p.explosionDamage, p.owner, p.abilityId, undefined, p.theme);
+          w.effects.shake(0.005, 140);
+        }
         p.expire();
         continue;
       }
@@ -89,6 +96,15 @@ export class ProjectileSystem {
         dirX: Math.cos(angle),
         dirY: Math.sin(angle),
       });
+      if (p.flags.has('freezeHit')) {
+        e.freeze(1.3, w.time);
+        w.effects.burst('frost', e.x, e.y - 6, 6);
+      }
+      if (p.splash > 0 && p.flags.has('split') && p.abilityId === 'void_bolt') this.split(p, e, w);
+      if (p.splash > 0 && p.flags.has('burst') && p.abilityId === 'frost_shard') {
+        w.combat.explode(p.x, p.y, 22, p.damage * p.splash, p.owner, 'frost_burst', e, 'frost');
+      }
+      if (p.abilityId === 'mind_lash') onMindLashHit(p, e, w);
       const explodeNow = p.flags.has('explode') && (p.pierce <= 0 || p.flags.has('explodeOnPierce'));
       if (explodeNow) w.combat.explode(p.x, p.y, p.explosionRadius, p.damage * p.explosionDamage, p.owner, p.abilityId, e);
       if (p.flags.has('chain') && p.chainCount > 0) {
@@ -102,6 +118,54 @@ export class ProjectileSystem {
       w.effects.burst(p.trail ?? 'spark', p.x, p.y, 5);
       p.expire();
       return;
+    }
+  }
+
+  /** Void Bolt "Fracture": two small shards fly off at an angle from the struck enemy. */
+  private split(p: Projectile, e: Enemy, w: World): void {
+    for (const side of [-1, 1]) {
+      const shard = this.spawn({
+        texture: 'proj-resonance',
+        team: 'player',
+        owner: p.owner,
+        abilityId: 'void_bolt_shard',
+        x: e.x,
+        y: e.y - 6,
+        angle: p.rotation + side * 0.65,
+        speed: p.speed * 0.9,
+        range: 80,
+        radius: 3,
+        damage: p.damage * p.splash,
+        knockback: 15,
+        pierce: 0,
+        trail: 'void',
+        scale: 1.4,
+        light: 0xb05cff,
+        glowScale: 0.7,
+      });
+      shard?.hitSet.add(e);
+    }
+    w.effects.burst('void', e.x, e.y - 6, 6);
+  }
+
+  /** Singularity Cannon: enemies near the shot are dragged toward it. */
+  private drag(p: Projectile, dt: number, w: World): void {
+    this.near.length = 0;
+    const r = 56;
+    w.enemyGrid.queryCircle(p.x, p.y, r, this.near);
+    for (const e of this.near) {
+      if (e.dying || e.isBoss) continue;
+      const dx = p.x - e.x;
+      const dy = p.y - e.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 4 || d > r) continue;
+      const f = (1 - d / r) * 260 * dt * (e.isElite ? 0.4 : 1);
+      e.x += (dx / d) * f;
+      e.y += (dy / d) * f;
+    }
+    if (w.rng.chance(0.5)) {
+      const a = w.rng.next() * Math.PI * 2;
+      w.effects.burst('void', p.x + Math.cos(a) * r * 0.8, p.y + Math.sin(a) * r * 0.8, 1, { angle: a + Math.PI, spread: 0.1 });
     }
   }
 

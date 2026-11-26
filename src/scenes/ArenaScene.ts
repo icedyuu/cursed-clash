@@ -24,6 +24,8 @@ import { ProjectileSystem } from '../systems/ProjectileSystem';
 import { ZoneSystem } from '../systems/ZoneSystem';
 import { XPSystem } from '../systems/XPSystem';
 import { WaveSystem } from '../systems/WaveSystem';
+import { FusionSystem } from '../systems/FusionSystem';
+import { applyUpgrade } from '../systems/UpgradeSystem';
 import { AbilitySystem } from '../systems/AbilitySystem';
 import { LocalMultiplayerSystem } from '../systems/LocalMultiplayerSystem';
 import { AI } from '../systems/ai/behaviors';
@@ -52,6 +54,7 @@ export class ArenaScene extends Phaser.Scene {
   xp!: XPSystem;
   waves!: WaveSystem;
   abilities!: AbilitySystem;
+  fusions!: FusionSystem;
   versus: LocalMultiplayerSystem | null = null;
   bossesDefeated = 0;
   ended = false;
@@ -104,6 +107,7 @@ export class ArenaScene extends Phaser.Scene {
     this.xp = new XPSystem(this, w);
     this.waves = new WaveSystem(w);
     this.abilities = new AbilitySystem(w);
+    this.fusions = new FusionSystem(this, w);
     this.versus = this.mode === 'versus' ? new LocalMultiplayerSystem(w) : null;
 
     this.enemyGroup = this.physics.add.group({ classType: Enemy, maxSize: DIFFICULTY.enemyCap.versus + 40, runChildUpdate: false });
@@ -150,6 +154,7 @@ export class ArenaScene extends Phaser.Scene {
     audio.playMusic('battle');
     SceneManager.fadeIn(this, 400);
     (window as unknown as { __cc?: unknown }).__cc = this;
+    if (IS_DEBUG) this.debugGrants();
   }
 
   private buildProps(): void {
@@ -350,6 +355,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const p of this.players) {
       p.update(dt, this.world);
       this.abilities.update(p, dt);
+      this.fusions.update(p, dt);
       if (this.god) p.hp = p.stats.maxHp;
     }
     this.versus?.update();
@@ -567,6 +573,21 @@ export class ArenaScene extends Phaser.Scene {
     this.scene.restart();
   }
 
+  /** Debug only: `&grant=bolt_overcharge*3,fusion_singularity` hands player 1 upgrades; `window.__ccGrant(id)` does it live. */
+  private debugGrants(): void {
+    const grant = (id: string, n = 1): void => {
+      const p = this.players[0];
+      for (let i = 0; i < n; i++) applyUpgrade(p.build, id, 'rare');
+      p.recomputeStats();
+    };
+    (window as unknown as { __ccGrant?: unknown }).__ccGrant = grant;
+    const list = new URLSearchParams(location.search).get('grant');
+    for (const part of list ? list.split(',') : []) {
+      const [id, n] = part.split('*');
+      grant(id, Number(n ?? 1));
+    }
+  }
+
   private debugKeys(): void {
     if (keys.wasPressed('F1')) this.runTime += 60;
     if (keys.wasPressed('F2')) for (const p of this.livingPlayers()) p.gainXp(p.xpNeeded - p.xp);
@@ -586,6 +607,7 @@ export class ArenaScene extends Phaser.Scene {
     this.game.events.off(Phaser.Core.Events.BLUR, this.autoPause, this);
     this.telegraphs?.clear();
     this.zones?.clear();
+    this.fusions?.clear();
     this.effects?.destroy();
     this.players = [];
     this.enemies = [];

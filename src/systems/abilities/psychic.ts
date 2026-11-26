@@ -10,6 +10,7 @@ import type { World } from '../World';
 import type { AbilityParams } from '../../data/types';
 import { computeAbilityParams } from '../UpgradeSystem';
 import { DEPTH } from '../../game/GameConfig';
+import type { Projectile } from '../../entities/Projectile';
 import { audio } from '../../game/AudioManager';
 import { addFragments, feedOverload, psychicPhase, takeFragments, tickPsychic, type PsychicTuning } from '../psychicState';
 
@@ -142,6 +143,7 @@ export const tickHollow = (p: Player, dt: number, w: World): void => {
 export const onKillForFragments = (e: Enemy, killer: Player | null, w: World): void => {
   // a sealed enemy's fragment belongs to whoever sealed it
   const sealed = e.sealOwner && e.sealedUntil > w.time - 0.25 ? e.sealOwner : null;
+  if (sealed && sealed.alive && hasFlag(sealed, 'outlet_seal', 'prison')) prisonBurst(e, sealed, w);
   const owner = isHollow(sealed) ? sealed : isHollow(killer) ? killer : null;
   if (!owner || !owner.alive) return;
   const fp = fragmentParams(owner);
@@ -157,6 +159,61 @@ export const onKillForFragments = (e: Enemy, killer: Player | null, w: World): v
     w.xp.drop('fragment', e.x + Math.cos(a) * (n > 1 ? 8 : 0), e.y + Math.sin(a) * (n > 1 ? 5 : 0), owner.index);
   }
   if (n > 0) w.effects.burst('psychic', e.x, e.y - 8, 6);
+};
+
+// ───────────────────────── infusions + fusions ─────────────────────────
+
+const hasFlag = (p: Player | null, ability: string, flag: string): boolean => !!p && (p.build.abilityFlags[ability] ?? []).includes(flag);
+
+/** Fusion "Mind Prison": sealed enemies take more damage from everyone. */
+export const sealDamageMult = (e: Enemy, t: number): number => (e.sealedUntil > t && hasFlag(e.sealOwner, 'outlet_seal', 'prison') ? 1.3 : 1);
+
+/** Fusion "Mind Prison": a sealed enemy's death bursts and seals its neighbours. */
+const prisonBurst = (e: Enemy, owner: Player, w: World): void => {
+  w.combat.explode(e.x, e.y - 6, 40, 14 * owner.stats.damage, owner, 'mind_prison', e, 'psychic');
+  w.effects.ring(e.x, e.y - 6, 4, 46, PSY_LIGHT, 0.35, 2);
+  tmp.length = 0;
+  for (const n of w.enemyGrid.queryCircle(e.x, e.y, 46, tmp)) {
+    if (n === e || n.dying) continue;
+    n.seal(1.6 * n.controlResist(0.3, 0.55), w.time, owner);
+  }
+};
+
+/** Infusion "Stolen Echo": the needle pops and briefly seals what it hit. */
+export const onMindLashHit = (pr: Projectile, e: Enemy, w: World): void => {
+  if (!(pr.splash > 0 && pr.flags.has('psyburst') && pr.abilityId === 'mind_lash')) return;
+  w.combat.explode(pr.x, pr.y, 20, pr.damage * pr.splash, pr.owner, 'mind_echo', e, 'psychic');
+  if (!e.dying) e.seal(0.5 * e.controlResist(0.3, 0.55), w.time, pr.owner);
+};
+
+/** Fusion "Choir of the Sealed": a fan of seeking needles. */
+export const choirVolley = (p: Player, x: number, y: number, angle: number, damage: number, w: World): void => {
+  for (let i = 0; i < 5; i++) {
+    w.projectiles.spawn({
+      texture: 'proj-mind-lash',
+      team: 'player',
+      owner: p,
+      abilityId: 'choir_needle',
+      x,
+      y,
+      angle: angle + (i - 2) * 0.45,
+      speed: 190,
+      range: 260,
+      radius: 3,
+      damage: damage * 0.9,
+      knockback: 20,
+      pierce: 1,
+      homing: 7,
+      trail: 'psychic',
+      scale: 1.2,
+      light: PSY,
+      theme: 'psychic',
+    });
+  }
+  w.effects.ring(x, y, 3, 24, PSY_LIGHT, 0.3, 2);
+  w.effects.flashLight(x, y, PSY, 36, 240, 0.8);
+  w.effects.floatText(p.x, p.y - 40, '"...all of you, speak."', '#cfc6e6', 10, 900);
+  audio.play('psychic_burst', { pitch: 1.4, volume: 0.6 });
 };
 
 // ───────────────────────── Q: Psychic Burst ─────────────────────────

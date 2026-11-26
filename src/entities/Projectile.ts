@@ -31,6 +31,15 @@ export interface ProjectileSpec {
   tint?: number;
   scale?: number;
   light?: number;
+  /** Size of the additive glow around the shot (multiplies the sprite size). */
+  glowScale?: number;
+  /** Seconds between trail puffs and puffs per emission (bigger = denser trail). */
+  trailEvery?: number;
+  trailCount?: number;
+  /** Damage ratio for secondary hits (splits, bursts). */
+  splash?: number;
+  /** Explosion theme for area hits caused by this projectile. */
+  theme?: 'void' | 'blood' | 'frost' | 'psychic';
 }
 
 export class Projectile extends Phaser.Physics.Arcade.Sprite {
@@ -55,6 +64,12 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
   hitSet = new Set<Enemy>();
   trailTimer = 0;
   lightColor = 0;
+  glowScale = 1;
+  glow: Phaser.GameObjects.Image | null = null;
+  trailEvery = 0.03;
+  trailCount = 1;
+  splash = 0;
+  theme: 'void' | 'blood' | 'frost' | 'psychic' = 'void';
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'proj-void-bolt', 0);
@@ -82,6 +97,20 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
     this.hitSet.clear();
     this.trailTimer = 0;
     this.lightColor = s.light ?? 0;
+    this.glowScale = s.glowScale ?? 1;
+    this.trailEvery = s.trailEvery ?? 0.03;
+    this.trailCount = s.trailCount ?? 1;
+    this.splash = s.splash ?? 0;
+    this.theme = s.theme ?? 'void';
+    if (this.lightColor) {
+      this.glow ??= this.scene.add.image(s.x, s.y, 'glow').setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.light);
+      this.glow
+        .setTint(this.lightColor)
+        .setAlpha(0.75)
+        .setScale(((Math.max(this.width, this.height) * (s.scale ?? 1)) / 32) * 2.2 * this.glowScale)
+        .setPosition(s.x, s.y)
+        .setVisible(true);
+    } else this.glow?.setVisible(false);
     this.setTexture(s.texture, 0);
     const loop = `${s.texture}:loop`;
     if (this.scene.anims.exists(loop)) this.play(loop, true);
@@ -106,6 +135,7 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
 
   expire(): void {
     this.setActive(false).setVisible(false);
+    this.glow?.setVisible(false);
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setVelocity(0, 0);
     body.enable = false;

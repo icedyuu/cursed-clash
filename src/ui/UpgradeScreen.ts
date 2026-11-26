@@ -6,7 +6,8 @@ import Phaser from 'phaser';
 import type { ArenaScene } from '../scenes/ArenaScene';
 import type { Player } from '../entities/Player';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../game/GameConfig';
-import { applyUpgrade, describeChoice, rollChoices, type UpgradeChoice } from '../systems/UpgradeSystem';
+import { applyUpgrade, describeChoice, fusionProgress, rollChoices, type UpgradeChoice } from '../systems/UpgradeSystem';
+import { UPGRADE_BY_ID } from '../data/upgrades';
 import { RARITIES } from '../data/rarities';
 import { menuIntent, tickInput } from '../game/InputManager';
 import { audio } from '../game/AudioManager';
@@ -127,20 +128,38 @@ export class UpgradeScene extends Phaser.Scene {
     const frame = this.add.nineslice(0, 0, 'ui-card-fill', 0, w, h, 6, 6, 6, 6).setTint(r.color);
     const inner = this.add.rectangle(0, 0, w - 6, h - 6, 0x120b1f, 0.92);
     const head = this.add.rectangle(0, -h / 2 + 12, w - 6, 16, r.color, 0.25);
-    const rarity = txt(this, 0, -h / 2 + 12, r.name.toUpperCase(), { origin: [0.5, 0.5], color: r.css });
+    const isFusion = c.upgrade.category === 'fusion';
+    const rarity = txt(this, 0, -h / 2 + 12, isFusion ? 'FUSION' : r.name.toUpperCase(), { origin: [0.5, 0.5], color: isFusion ? '#ffffff' : r.css });
     const iconGlow = this.add.image(0, -h / 2 + 46, 'glow').setTint(r.color).setBlendMode(Phaser.BlendModes.ADD).setScale(1.6).setAlpha(0.7);
     const icon = this.add.image(0, -h / 2 + 46, 'icons', c.upgrade.icon).setScale(2);
     const name = txt(this, 0, -h / 2 + 72, c.upgrade.name.toUpperCase(), { origin: [0.5, 0], color: '#ffffff', wrap: w - 12, align: 'center' });
     const desc = txt(this, 0, -h / 2 + 100, describeChoice(c), { origin: [0.5, 0], color: COLORS.textDim, wrap: w - 12, align: 'center' });
-    const prev = txt(this, 0, h / 2 - 34, previewChoice(side.p, c), { origin: [0.5, 0.5], color: COLORS.gold, wrap: w - 8, align: 'center' });
+    const prev = txt(this, 0, h / 2 - 34, isFusion ? 'NEW FUSED ABILITY' : previewChoice(side.p, c), { origin: [0.5, 0.5], color: COLORS.gold, wrap: w - 8, align: 'center' });
     const stacks = side.p.build.stacks[c.upgrade.id] ?? 0;
-    const lvl = txt(this, 0, h / 2 - 12, c.completesSynergy ? `* ${c.completesSynergy.name.toUpperCase()}` : stacks > 0 ? `RANK ${stacks} > ${stacks + 1}` : c.upgrade.category === 'stat' ? 'NEW STAT' : 'NEW ABILITY BOON', {
-      origin: [0.5, 0.5],
-      color: c.completesSynergy ? '#6fe3ff' : COLORS.textDark,
-      wrap: w - 8,
-      align: 'center',
-    });
+    const fp = isFusion ? [] : fusionProgress(side.p.build, c.upgrade.id);
+    let lvlText = stacks > 0 ? `RANK ${stacks} > ${stacks + 1}` : c.upgrade.category === 'stat' ? 'NEW STAT' : 'NEW ABILITY BOON';
+    let lvlColor: string = COLORS.textDark;
+    if (isFusion) {
+      lvlText = (c.upgrade.fusion ?? []).map((f) => UPGRADE_BY_ID[f.id].name.replace(/^.*: /, '').toUpperCase()).join(' + ');
+      lvlColor = '#ffb340';
+    } else if (c.completesSynergy) {
+      lvlText = `* ${c.completesSynergy.name.toUpperCase()}`;
+      lvlColor = '#6fe3ff';
+    } else if (fp.length > 0) {
+      const f = fp[0];
+      lvlText = `> ${f.fusion.name.replace('Fusion: ', '').toUpperCase()} ${f.have}/${f.need}`;
+      lvlColor = '#ffb340';
+    }
+    const lvl = txt(this, 0, h / 2 - 12, lvlText, { origin: [0.5, 0.5], color: lvlColor, wrap: w - 8, align: 'center' });
     cont.add([glow, frame, inner, head, rarity, iconGlow, icon, name, desc, prev, lvl]);
+    if (isFusion) {
+      // shimmering multi-colour frame so fusions stand out from normal cards
+      const hues = [0xb05cff, 0xff3344, 0x6fe3ff, 0xffb340];
+      let k = 0;
+      this.time.addEvent({ delay: 220, loop: true, callback: () => frame.active && frame.setTint(hues[k++ % hues.length]) });
+      head.setFillStyle(0xffb340, 0.45);
+      this.tweens.add({ targets: icon, scale: 2.4, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    }
     cont.setData('glow', glow).setData('frame', frame).setData('baseY', cont.y);
     cont.setSize(w, h).setInteractive({ useHandCursor: true });
     cont.on('pointerover', () => {
@@ -181,6 +200,12 @@ export class UpgradeScene extends Phaser.Scene {
     p.recomputeStats();
     if (res.healRatio > 0) p.heal(p.stats.maxHp * res.healRatio * 0.5, this.arena.world);
     audio.play('upgrade_pick');
+    if (choice.upgrade.category === 'fusion') {
+      this.arena.banner(choice.upgrade.name.toUpperCase(), '#ffb340', choice.upgrade.description);
+      this.arena.world.effects.ring(p.x, p.y - 10, 6, 80, 0xffb340, 0.6, 4);
+      this.arena.world.effects.burst('gold', p.x, p.y - 10, 30);
+      audio.play('synergy');
+    }
     for (const s of res.newSynergies) {
       this.arena.events.emit('synergy', s.name, p);
       this.arena.banner(`SYNERGY: ${s.name.toUpperCase()}`, '#6fe3ff', s.description);

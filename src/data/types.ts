@@ -52,6 +52,10 @@ export type AbilityParamKey =
   | 'lifestealBonus'
   | 'waveDamage'
   | 'shake'
+  /** Basic-attack infusion rank (drives bigger, flashier visuals). */
+  | 'infusion'
+  /** Damage ratio of secondary hits (splits, bursts, echoes). */
+  | 'splashDamage'
   // ── The Hollow (psychic fragments / overload) ──
   | 'capacity'
   | 'consume'
@@ -156,7 +160,9 @@ export interface UpgradeDef {
   maxStacks: number;
   requires?: string[];
   effects: UpgradeEffect[];
-  category: 'stat' | 'ability' | 'passive';
+  category: 'stat' | 'ability' | 'passive' | 'fusion';
+  /** Fusion: the upgrades (and ranks) that must be owned before this is offered. */
+  fusion?: { id: string; rank: number }[];
 }
 
 export interface SynergyDef {

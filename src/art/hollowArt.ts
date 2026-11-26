@@ -377,6 +377,20 @@ export const HOLLOW_ICONS: Record<string, IconDraw> = {
     p.line(10, 2, 11, 13, HAIR2);
     p.rect(6, 11, 4, 4, GOWN);
   },
+  'icon-fusion-prison': (p) => {
+    p.rect(2, 2, 12, 12, '#2a2438');
+    for (let x = 4; x <= 12; x += 3) p.line(x, 2, x, 13, PSY);
+    p.ring(8, 8, 3, PSY_L);
+    p.px(8, 8, PAL.gold2);
+    p.line(2, 2, 13, 2, PAL.gold2);
+  },
+  'icon-fusion-choir': (p) => {
+    p.ellipse(8, 9, 2.5, 3, HEAD_M);
+    for (let i = 0; i < 5; i++) {
+      const a = -Math.PI / 2 + (i - 2) * 0.55;
+      p.line(8 + Math.cos(a) * 4, 8 + Math.sin(a) * 4, 8 + Math.cos(a) * 7, 8 + Math.sin(a) * 7, i === 2 ? PAL.gold2 : PSY_L);
+    }
+  },
   'icon-psychic-fragments': (p) => {
     p.poly([[4, 3], [6, 7], [4, 11], [2, 7]], PSY);
     p.poly([[11, 1], [13.5, 6], [11, 10], [8.5, 6]], PSY_L);
