@@ -19,6 +19,10 @@ npm run typecheck  # TypeScript only
 
 The build is a static site (`base: './'`), so `dist/` can be hosted anywhere, including GitHub Pages, itch.io or a plain folder.
 
+**Play online:** https://icedyuu.github.io/cursed-clash/
+
+Every push to `main` runs the tests, builds the game and deploys it with `.github/workflows/deploy.yml`. Pages has to be turned on once: open *Settings → Pages* and set *Source* to **GitHub Actions**.
+
 ---
 
 ## Modes
