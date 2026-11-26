@@ -9,6 +9,7 @@ import { PixelCanvas } from './pixel';
 import { PAL } from './palette';
 import { CHARACTER_ANIMS, humanoidPose, type Pose } from './anims';
 import type { CharacterId } from '../data/types';
+import { drawHollow, PSY } from './hollowArt';
 
 export const CHAR_FRAME = 32;
 const CX = 16;
@@ -306,6 +307,7 @@ const SPECS: Record<CharacterId, CharArtSpec> = {
   voidwalker: { draw: drawVoidwalker, rest: 0.9, attack: [-0.4, -0.2, 0, 0.1], cast: [0.2, -0.3, -0.5, -0.1], ember: PAL.void5 },
   blood_reaper: { draw: drawReaper, rest: 1.05, attack: [-2.4, -0.9, 0.7, 1.5], cast: [-1.4, -1.6, -1.6, -1.2], ember: PAL.blood3 },
   frost_witch: { draw: drawWitch, rest: 0.5, attack: [0.2, -0.3, -0.5, 0], cast: [0.3, -0.2, -0.6, -0.2], ember: PAL.frost3 },
+  hollow: { draw: drawHollow, rest: 1.3, attack: [1.0, 0.1, -0.2, 0.3], cast: [-0.3, -0.8, -1.1, -0.7], ember: PSY },
 };
 
 export interface GeneratedSheet {
@@ -339,4 +341,4 @@ export const generateCharacterSheet = (id: CharacterId): GeneratedSheet => {
 };
 
 /** Larger portrait (2x) for character select: simply the idle frame scaled up later via setScale. */
-export const CHARACTER_ART_IDS: CharacterId[] = ['voidwalker', 'blood_reaper', 'frost_witch'];
+export const CHARACTER_ART_IDS: CharacterId[] = ['voidwalker', 'blood_reaper', 'frost_witch', 'hollow'];

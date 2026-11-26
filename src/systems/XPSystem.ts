@@ -8,6 +8,7 @@ import { gemTextureFor, xpToNext } from '../core/progression';
 import { ARENA } from '../game/GameConfig';
 import { dist2 } from '../core/math';
 import { audio } from '../game/AudioManager';
+import { gainFragments } from './abilities/psychic';
 
 export { xpToNext, gemTextureFor };
 
@@ -62,12 +63,12 @@ export class XPSystem {
   }
 
   drop(kind: Exclude<PickupKind, 'xp'>, x: number, y: number, reservedFor: 0 | 1 | null = null): Pickup {
-    const tex = { heart: 'pickup-heart', chest: 'pickup-chest', magnet: 'pickup-magnet', crown: 'pickup-crown' }[kind];
+    const tex = { heart: 'pickup-heart', chest: 'pickup-chest', magnet: 'pickup-magnet', crown: 'pickup-crown', fragment: 'pickup-fragment' }[kind];
     const [cx, cy] = this.clampToArena(x, y);
     const p = this.obtain();
     p.init(kind, cx, cy, 0, tex, this.world().time);
     p.reservedFor = reservedFor;
-    if (reservedFor !== null) p.setTint(reservedFor === 0 ? 0xd9c2ff : 0xc2ffec);
+    if (reservedFor !== null && kind !== 'fragment') p.setTint(reservedFor === 0 ? 0xd9c2ff : 0xc2ffec);
     else p.clearTint();
     // pop-out arc
     this.scene.tweens.add({ targets: p, y: { from: cy - 10, to: cy }, duration: 350, ease: 'Bounce.easeOut' });
@@ -93,7 +94,8 @@ export class XPSystem {
         let bd = Infinity;
         for (const pl of players) {
           if (p.reservedFor !== null && pl.index !== p.reservedFor) continue;
-          const range = p.kind === 'xp' ? pl.stats.pickupRange : 14;
+          // fragments are drawn in when he comes near (auto collection)
+          const range = p.kind === 'xp' ? pl.stats.pickupRange : p.kind === 'fragment' ? pl.stats.pickupRange * 0.8 : 14;
           const d = dist2(p.x, p.y, pl.x, pl.y - 6);
           if (d < range * range && d < bd) {
             bd = d;
@@ -148,6 +150,12 @@ export class XPSystem {
         w.effects.burst('gold', p.x, p.y, 30);
         w.effects.ring(p.x, p.y, 4, 36, 0xffd36b, 0.5);
         audio.play('chest');
+        break;
+      case 'fragment':
+        gainFragments(pl, 1, w);
+        w.effects.burst('psychic', pl.x, pl.y - 14, 6);
+        w.effects.ring(pl.x, pl.y - 14, 3, 12, 0xd9ccff, 0.2, 1);
+        audio.play('fragment', { pitch: 0.9 + Math.random() * 0.2 });
         break;
       case 'crown':
         pl.pendingRewards.push('epic');

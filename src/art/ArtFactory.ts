@@ -10,6 +10,7 @@ import { generateUiSheets } from './uiArt';
 import { generateIconAtlas, ICON_SIZE } from './iconArt';
 import { generateArenaFloor, generatePropSheets } from './environmentArt';
 import { manifestEntry } from '../data/assetManifest';
+import { generateHollowSheets, generateWifeSheet } from './hollowArt';
 
 const addFrames = (scene: Phaser.Scene, key: string, canvas: HTMLCanvasElement, fw: number, fh: number): number => {
   if (scene.textures.exists(key)) scene.textures.remove(key);
@@ -58,6 +59,10 @@ export const ArtFactory = {
         for (const [key, sheet] of Object.entries(generateMonsterSheets())) registerSheet(scene, key, sheet);
       },
       () => generateEffectSheets().forEach((s) => registerSimple(scene, s)),
+      () => {
+        generateHollowSheets().forEach((s) => registerSimple(scene, s));
+        registerSheet(scene, 'remnant-wife', generateWifeSheet());
+      },
       () => generateUiSheets().forEach((s) => registerSimple(scene, s)),
       () => generatePropSheets().forEach((s) => registerSimple(scene, s)),
       () => {

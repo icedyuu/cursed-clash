@@ -6,7 +6,7 @@ import Phaser from 'phaser';
 import { DEPTH, FONT } from '../game/GameConfig';
 import { GameManager } from '../game/GameManager';
 
-export type ParticleKind = 'void' | 'blood' | 'frost' | 'slime' | 'shadow' | 'bone' | 'gold' | 'flesh' | 'xp' | 'dust' | 'spark' | 'king';
+export type ParticleKind = 'void' | 'blood' | 'frost' | 'slime' | 'shadow' | 'bone' | 'gold' | 'flesh' | 'xp' | 'dust' | 'spark' | 'king' | 'psychic' | 'hair';
 
 const PARTICLES: Record<ParticleKind, { tint: number[]; blend: 'ADD' | 'NORMAL'; speed: [number, number]; life: [number, number]; scale: number; tex?: string }> = {
   void: { tint: [0xb05cff, 0xe0b3ff, 0x8a4fe0], blend: 'ADD', speed: [20, 90], life: [250, 600], scale: 1 },
@@ -21,6 +21,8 @@ const PARTICLES: Record<ParticleKind, { tint: number[]; blend: 'ADD' | 'NORMAL';
   dust: { tint: [0x5d547f, 0x3a3050], blend: 'NORMAL', speed: [5, 25], life: [250, 450], scale: 1 },
   spark: { tint: [0xffffff, 0xfff1b8], blend: 'ADD', speed: [60, 160], life: [100, 250], scale: 0.5, tex: 'spark' },
   king: { tint: [0xffd36b, 0xff3355, 0x4a1f52], blend: 'ADD', speed: [40, 180], life: [400, 1000], scale: 1.5 },
+  psychic: { tint: [0x9d86e0, 0xd9ccff, 0x6a58a8], blend: 'ADD', speed: [15, 80], life: [300, 700], scale: 1 },
+  hair: { tint: [0x07060a, 0x15121c, 0x2a2438], blend: 'NORMAL', speed: [40, 160], life: [400, 900], scale: 1 },
 };
 
 interface Shape {

@@ -39,7 +39,9 @@ export class CharacterSelectScene extends Phaser.Scene {
   }
 
   private slotX(i: number): number {
-    return GAME_WIDTH / 2 + (i - 1) * 150;
+    const n = CHARACTER_ORDER.length;
+    const spacing = n > 3 ? 124 : 150;
+    return GAME_WIDTH / 2 + (i - (n - 1) / 2) * spacing;
   }
 
   create(): void {
@@ -61,8 +63,8 @@ export class CharacterSelectScene extends Phaser.Scene {
         if (!this.cursors[0].ready && this.cursors[0].index !== i) this.move(0, i - this.cursors[0].index);
       });
       this.sprites.push(s);
-      txt(this, x, 126, def.name.replace('The ', '').toUpperCase(), { font: 'title', origin: [0.5, 0.5], color: `#${def.color.toString(16)}` });
-      txt(this, x, 138, def.role.toUpperCase(), { origin: [0.5, 0.5], color: COLORS.textDim });
+      txt(this, x, 124, def.name.replace('The ', '').toUpperCase(), { font: 'title', origin: [0.5, 0.5], color: `#${def.color.toString(16)}` });
+      txt(this, x, 132, def.role.toUpperCase().split(' / ').join('\n'), { origin: [0.5, 0], align: 'center', color: COLORS.textDim, lineSpacing: 0 });
     });
     const n = this.mode === 'versus' ? 2 : 1;
     for (let k = 0; k < n; k++) {
@@ -96,7 +98,7 @@ export class CharacterSelectScene extends Phaser.Scene {
   private move(k: number, delta: number): void {
     const c = this.cursors[k];
     if (c.ready) return;
-    c.index = (c.index + delta + 3) % 3;
+    c.index = (c.index + delta + CHARACTER_ORDER.length) % CHARACTER_ORDER.length;
     audio.play('ui_move');
     this.refresh(k);
   }

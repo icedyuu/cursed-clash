@@ -17,6 +17,8 @@ export const ASSET_MANIFEST: AssetEntry[] = [
   { key: 'hero-voidwalker', frameWidth: 32, frameHeight: 32, group: 'hero' },
   { key: 'hero-blood_reaper', frameWidth: 32, frameHeight: 32, group: 'hero' },
   { key: 'hero-frost_witch', frameWidth: 32, frameHeight: 32, group: 'hero' },
+  { key: 'hero-hollow', frameWidth: 32, frameHeight: 32, group: 'hero' },
+  { key: 'remnant-wife', frameWidth: 36, frameHeight: 64, group: 'effect' },
   { key: 'enemy-slime', frameWidth: 16, frameHeight: 16, group: 'monster' },
   { key: 'enemy-wraith', frameWidth: 20, frameHeight: 24, group: 'monster' },
   { key: 'enemy-knight', frameWidth: 32, frameHeight: 28, group: 'monster' },

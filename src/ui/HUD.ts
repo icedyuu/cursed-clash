@@ -12,6 +12,8 @@ import { GameManager } from '../game/GameManager';
 import type { Boss } from '../entities/Boss';
 import { audio } from '../game/AudioManager';
 import { IS_TOUCH, touchOverlay, type TouchSlotInfo } from './TouchControls';
+import { fragmentCapacity, fragmentParams } from '../systems/abilities/psychic';
+import { psychicPhase } from '../systems/psychicState';
 
 interface SlotView {
   slot: 'basic' | 'q' | 'e' | 'ult' | 'dash';
@@ -35,6 +37,8 @@ interface PlayerView {
   barW: number;
   mirrored: boolean;
   lastLevel: number;
+  /** Psychic Fragments + Overload row (The Hollow only). */
+  res?: { y: number; label: Phaser.GameObjects.Text; state: Phaser.GameObjects.Text; lastFragments: number };
 }
 
 const KEYS_SOLO = { basic: 'LMB', q: 'Q', e: 'E', ult: 'R', dash: 'SPC' };
@@ -138,7 +142,18 @@ export class HUDScene extends Phaser.Scene {
       if (IS_TOUCH && !versus) [frame, icon, key, cd].forEach((o) => o.setVisible(false));
       slots.push({ slot, x, y, frame, icon, key, cd });
     });
-    return { p, slots, name, level, hpText, kills, barX, barY: 16, barW, mirrored, lastLevel: 1 };
+    let res: PlayerView['res'];
+    if (p.psychic) {
+      const y = versus ? 51 : 41;
+      const tx = mirrored ? left - 30 - barW - 4 : left + 30 + barW + 4;
+      res = {
+        y,
+        label: txt(this, tx, y - 2, '', { origin: [mirrored ? 1 : 0, 0], color: '#b9a3ff' }),
+        state: txt(this, tx, y + 6, '', { origin: [mirrored ? 1 : 0, 0], color: COLORS.textDim }),
+        lastFragments: 0,
+      };
+    }
+    return { p, slots, name, level, hpText, kills, barX, barY: 16, barW, mirrored, lastLevel: 1, res };
   }
 
   private onBanner(text: string, color: string, sub?: string): void {
@@ -259,6 +274,7 @@ export class HUDScene extends Phaser.Scene {
       this.tweens.add({ targets: v.level, scale: 1.4, yoyo: true, duration: 150 });
     }
     const t = this.arena.runTime;
+    if (v.res && p.psychic) this.drawPsychic(v, g, t);
     for (const s of v.slots) {
       if (!s.frame.visible) continue;
       let ratio = 0;
@@ -290,6 +306,33 @@ export class HUDScene extends Phaser.Scene {
       s.cd.setText(label).setFontSize(8);
       s.cd.setFontFamily(FONT.body);
     }
+  }
+
+  /** The Hollow: fragment pips + overload meter under the portrait column. */
+  private drawPsychic(v: PlayerView, g: Phaser.GameObjects.Graphics, t: number): void {
+    const p = v.p;
+    const s = p.psychic!;
+    const r = v.res!;
+    const cap = fragmentCapacity(p);
+    const step = Math.min(6, Math.floor((v.barW + 2) / cap));
+    const size = step - 2;
+    for (let i = 0; i < cap; i++) {
+      const x = v.mirrored ? v.barX + v.barW - (i + 1) * step + 2 : v.barX + i * step;
+      const full = i < s.fragments;
+      g.fillStyle(0x0d0816, 1).fillRect(x - 1, r.y - 1, size + 2, size + 2);
+      g.fillStyle(full ? 0xb9a3ff : 0x241d33, 1).fillRect(x, r.y, size, size);
+      if (full) g.fillStyle(0xffffff, 0.5).fillRect(x, r.y, 1, 1);
+    }
+    if (s.fragments > r.lastFragments) this.tweens.add({ targets: r.label, scale: 1.3, yoyo: true, duration: 90 });
+    r.lastFragments = s.fragments;
+    const phase = psychicPhase(s, this.arena.runTime);
+    const ratio = s.overload / 100;
+    const color = phase === 'overload' ? (Math.floor(t * 10) % 2 ? 0xffffff : 0xd9ccff) : phase === 'recovery' ? 0x4a4458 : ratio >= 0.8 ? (Math.floor(t * 6) % 2 ? 0xb9a3ff : 0x8a70d0) : 0x7a62c0;
+    this.bar(g, v.barX, r.y + size + 3, v.barW, 2, phase === 'recovery' ? 1 - (s.recoveryUntil - this.arena.runTime) / Math.max(1, fragmentParams(p).recoveryDuration ?? 3.5) : ratio, color, 0x16111f, v.mirrored);
+    r.label.setText(`${s.fragments}/${cap}`);
+    r.state
+      .setText(phase === 'overload' ? 'OVERLOAD' : phase === 'recovery' ? 'RECOVERING' : ratio >= 0.8 ? 'STRAIN' : '')
+      .setColor(phase === 'overload' ? '#e6dcff' : phase === 'recovery' ? '#8a80a8' : '#b9a3ff');
   }
 
   private drawBoss(g: Phaser.GameObjects.Graphics): void {

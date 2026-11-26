@@ -1,7 +1,8 @@
 /** Shared data-definition types. Everything gameplay-related is described by these configs. */
 import type { StatBlock, StatKey } from '../core/stats';
 
-export type CharacterId = 'voidwalker' | 'blood_reaper' | 'frost_witch';
+export type CharacterId = 'voidwalker' | 'blood_reaper' | 'frost_witch' | 'hollow';
+export type Theme = 'void' | 'blood' | 'frost' | 'psychic';
 export type AbilitySlot = 'basic' | 'q' | 'e' | 'ult' | 'passive';
 export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
 
@@ -13,6 +14,9 @@ export type AbilityBehavior =
   | 'groundZone'
   | 'buff'
   | 'freezeNova'
+  | 'psychicBurst'
+  | 'outletSeal'
+  | 'lastRemnant'
   | 'passive';
 
 export type AbilityParamKey =
@@ -47,7 +51,24 @@ export type AbilityParamKey =
   | 'damageBonus'
   | 'lifestealBonus'
   | 'waveDamage'
-  | 'shake';
+  | 'shake'
+  // ── The Hollow (psychic fragments / overload) ──
+  | 'capacity'
+  | 'consume'
+  | 'fragmentDamage'
+  | 'fragmentRadius'
+  | 'damagePerFragment'
+  | 'overloadGain'
+  | 'overloadDuration'
+  | 'overloadDamage'
+  | 'overloadArea'
+  | 'recoveryDuration'
+  | 'recoveryPenalty'
+  | 'sealChance'
+  | 'bossResist'
+  | 'eliteResist'
+  | 'restrainTime'
+  | 'castTime';
 
 export type AbilityParams = Partial<Record<AbilityParamKey, number>>;
 
@@ -62,14 +83,14 @@ export interface AbilityDef {
   /** Flags enable optional behaviour branches (explode, chain, pierce...). */
   flags?: string[];
   /** Visual theme used by effects. */
-  theme: 'void' | 'blood' | 'frost';
+  theme: Theme;
   anim: 'attack' | 'cast';
   sfx: string;
   /** Additional projectiles from the "projectiles" stat apply to this ability. */
   multishot?: boolean;
 }
 
-export type DashStyle = 'blink' | 'burst' | 'glide';
+export type DashStyle = 'blink' | 'burst' | 'glide' | 'drift';
 
 export interface CharacterDef {
   id: CharacterId;
@@ -78,7 +99,11 @@ export interface CharacterDef {
   role: string;
   playstyle: string;
   lore: string;
-  theme: 'void' | 'blood' | 'frost';
+  theme: Theme;
+  /** Optional difficulty label shown on character select. */
+  difficulty?: 'Low' | 'Medium' | 'High';
+  /** Optional character resource shown in the HUD (e.g. The Hollow's Psychic Fragments). */
+  resource?: { id: string; name: string; color: number };
   color: number;
   accent: number;
   stats: Partial<StatBlock>;

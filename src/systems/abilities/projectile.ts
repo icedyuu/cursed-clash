@@ -8,6 +8,7 @@ const VISUALS: Record<string, { texture: string; trail: ParticleKind; scale?: nu
   void_orb: { texture: 'proj-void-orb', trail: 'void', light: 0xb05cff },
   frost_shard: { texture: 'proj-frost-shard', trail: 'frost' },
   ice_lance: { texture: 'proj-ice-lance', trail: 'frost', light: 0x6fe3ff },
+  mind_lash: { texture: 'proj-mind-lash', trail: 'psychic' },
 };
 
 export const projectileBehavior: Behavior = ({ w, p, inst, params, flags, angle }) => {

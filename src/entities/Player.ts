@@ -17,6 +17,10 @@ import { emptyIntent } from '../game/InputManager';
 import { THEME_COLORS } from '../art/palette';
 import type { World } from '../systems/World';
 import { audio } from '../game/AudioManager';
+import { newPsychicState, type PsychicPhase, type PsychicState } from '../systems/psychicState';
+import type { ParticleKind } from '../systems/EffectsSystem';
+
+const THEME_PARTICLE: Record<CharacterDef['theme'], ParticleKind> = { void: 'void', blood: 'blood', frost: 'frost', psychic: 'psychic' };
 
 export interface AbilityInstance {
   def: AbilityDef;
@@ -66,6 +70,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   /** Run clock as of the last update. */
   now = 0;
   lifestealBudget = 0;
+  /** The Hollow's Psychic Fragments + Overload (null for heroes without this resource). */
+  psychic: PsychicState | null = null;
+  psychicPhase: PsychicPhase = 'normal';
   private buffs: TimedBuff[] = [];
   private vx = 0;
   private vy = 0;
@@ -95,6 +102,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       ult: this.makeAbility(def.abilities.ult),
     };
     this.passive = getAbility(def.abilities.passive);
+    if (def.resource?.id === 'fragments') this.psychic = newPsychicState();
     this.recomputeStats();
     this.hp = this.stats.maxHp;
     this.shadow = scene.add.image(x, y, 'shadow-m').setDepth(DEPTH.shadows);
@@ -185,6 +193,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       body.setVelocity(this.dashDir.x * speed, this.dashDir.y * speed);
       w.effects.afterimage(this, this.theme.main, 0.45, 220);
       if (this.def.dash.style === 'glide') w.effects.burst('frost', this.x, this.y - 3, 1);
+      else if (this.def.dash.style === 'drift') w.effects.burst('psychic', this.x, this.y - 12, 1);
       if (this.dashTime <= 0) {
         this.vx = this.dashDir.x * this.stats.moveSpeed;
         this.vy = this.dashDir.y * this.stats.moveSpeed;
@@ -241,7 +250,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.dashTime = this.def.dash.duration;
       this.invulnUntil = w.time + this.def.dash.duration + 0.08;
       audio.play('dash');
-      w.effects.burst(style === 'glide' ? 'frost' : 'dust', this.x, this.y - 2, 8, { angle: Math.atan2(-d.y, -d.x), spread: 0.5 });
+      w.effects.burst(style === 'glide' ? 'frost' : style === 'drift' ? 'psychic' : 'dust', this.x, this.y - 2, 8, { angle: Math.atan2(-d.y, -d.x), spread: 0.5 });
     }
     this.play(`hero-${this.def.id}:dash`, true);
   }
@@ -276,6 +285,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.invulnUntil > t && this.dashTime <= 0 && this.hurtUntil > t - 0.6) this.setAlpha(Math.floor(t * 20) % 2 ? 0.45 : 1);
     else this.setAlpha(1);
     if (this.hasBuff('blood_moon')) this.setTint(0xffb3b3);
+    else if (this.psychicPhase === 'overload' && this.hurtUntil <= t) this.setTint(Math.floor(t * 8) % 2 ? 0xe6dcff : 0xc9b8ff);
+    else if (this.psychicPhase === 'recovery' && this.hurtUntil <= t) this.setTint(0x9a94a8);
     else if (this.hurtUntil > t) this.setTint(0xff8a8a);
     else this.clearTint();
     // aim indicator
@@ -334,7 +345,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.play(`hero-${this.def.id}:death`, true);
     this.reticle.setVisible(false);
     this.marker.setVisible(false);
-    w.effects.burst(this.def.theme === 'void' ? 'void' : this.def.theme === 'blood' ? 'blood' : 'frost', this.x, this.y - 12, 40);
+    w.effects.burst(THEME_PARTICLE[this.def.theme], this.x, this.y - 12, 40);
     w.effects.ring(this.x, this.y - 10, 6, 60, this.theme.main, 0.6, 3);
   }
 }

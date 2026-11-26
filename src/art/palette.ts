@@ -81,6 +81,7 @@ export const THEME_COLORS = {
   void: { main: 0xb05cff, light: 0xe0b3ff, dark: 0x5b2a9e },
   blood: { main: 0xff3344, light: 0xff8a8a, dark: 0x8a1022 },
   frost: { main: 0x6fe3ff, light: 0xd4f7ff, dark: 0x2f7fd6 },
+  psychic: { main: 0x9d86e0, light: 0xd9ccff, dark: 0x4a3a78 },
 } as const;
 
 export const hexToNum = (hex: string): number => parseInt(hex.replace('#', '').slice(0, 6), 16);

@@ -172,6 +172,41 @@ const SFX: Record<string, Layer[]> = {
     { wave: 'triangle', f0: 220, f1: 330, dur: 0.4, vol: 0.1 },
     { wave: 'sine', f0: 110, dur: 0.6, vol: 0.12 },
   ],
+  // ── The Hollow ──
+  mind_lash: [
+    { wave: 'sine', f0: 1400, f1: 500, dur: 0.07, vol: 0.06 },
+    { wave: 'triangle', f0: 700, f1: 900, dur: 0.05, vol: 0.04, delay: 0.01 },
+  ],
+  psychic_burst: [
+    { wave: 'sine', f0: 90, f1: 40, dur: 0.35, vol: 0.2 },
+    { wave: 'sawtooth', f0: 300, f1: 1200, dur: 0.12, vol: 0.06, filter: { type: 'bandpass', f0: 900, f1: 2400, q: 4 } },
+    { wave: 'noise', f0: 0, dur: 0.2, vol: 0.08, filter: { type: 'bandpass', f0: 1500, f1: 400, q: 2 }, delay: 0.02 },
+  ],
+  outlet_seal: [
+    { wave: 'triangle', f0: 1800, f1: 1600, dur: 0.12, vol: 0.06 },
+    { wave: 'sine', f0: 240, f1: 120, dur: 0.18, vol: 0.12, delay: 0.06 },
+    { wave: 'square', f0: 120, f1: 60, dur: 0.05, vol: 0.06, delay: 0.14, filter: { type: 'lowpass', f0: 600 } },
+  ],
+  ultimate_psychic: [
+    { wave: 'sine', f0: 523, f1: 494, dur: 1.6, vol: 0.06, attack: 0.4 },
+    { wave: 'sine', f0: 659, f1: 622, dur: 1.6, vol: 0.05, attack: 0.5, delay: 0.15 },
+    { wave: 'sawtooth', f0: 55, f1: 50, dur: 1.8, vol: 0.12, attack: 0.3, filter: { type: 'lowpass', f0: 400, f1: 200, q: 3 } },
+  ],
+  hair_bind: [
+    { wave: 'noise', f0: 0, dur: 0.5, vol: 0.12, attack: 0.05, filter: { type: 'highpass', f0: 2000, f1: 5000 } },
+    { wave: 'sine', f0: 220, f1: 110, dur: 0.4, vol: 0.06 },
+  ],
+  psychic_release: [
+    { wave: 'sine', f0: 70, f1: 30, dur: 0.9, vol: 0.28 },
+    { wave: 'noise', f0: 0, dur: 0.7, vol: 0.16, filter: { type: 'lowpass', f0: 2400, f1: 200 } },
+    { wave: 'sine', f0: 1046, f1: 523, dur: 1.0, vol: 0.05, delay: 0.1 },
+  ],
+  fragment: [{ wave: 'sine', f0: 900, f1: 1350, dur: 0.08, vol: 0.06 }, { wave: 'sine', f0: 1350, f1: 1800, dur: 0.06, vol: 0.03, delay: 0.05 }],
+  overload: [
+    { wave: 'sawtooth', f0: 110, f1: 330, dur: 0.6, vol: 0.12, filter: { type: 'bandpass', f0: 600, f1: 2400, q: 5 } },
+    { wave: 'sine', f0: 220, f1: 440, dur: 0.5, vol: 0.08 },
+  ],
+  overload_end: [{ wave: 'sine', f0: 330, f1: 110, dur: 0.5, vol: 0.08 }],
 };
 
 // ───────── Music ─────────

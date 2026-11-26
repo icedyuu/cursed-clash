@@ -11,6 +11,7 @@ import { computeAbilityParams } from './UpgradeSystem';
 import { PLAYER_BALANCE } from '../data/balance';
 import { audio } from '../game/AudioManager';
 import type { ParticleKind } from './EffectsSystem';
+import { onKillForFragments } from './abilities/psychic';
 
 export interface HitOptions {
   owner: Player | null;
@@ -217,6 +218,7 @@ export class CombatSystem {
       credited.addUltCharge(e.def.xp * 0.8);
       this.voidResonance(credited, e, w);
     }
+    onKillForFragments(e, credited, w);
     if (e.isElite) {
       w.effects.shake(0.006, 250);
       w.effects.ring(e.x, e.y - 10, 8, 70, 0xff66cc, 0.6, 3);

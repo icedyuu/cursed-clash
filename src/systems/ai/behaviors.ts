@@ -52,7 +52,7 @@ const brute: Ai = (e, _dt, w) => {
   }
   if (!p) return void (e.desiredVx = e.desiredVy = 0);
   const d = Math.hypot(p.x - e.x, p.y - e.y);
-  if (d < (ap.attackRange ?? 36) && t >= (e.ai.readyAt ?? 0) && !e.isFrozenAt(t)) {
+  if (d < (ap.attackRange ?? 36) && t >= (e.ai.readyAt ?? 0) && !e.isDisabledAt(t)) {
     e.ai.state = 1;
     const angle = Math.atan2(p.y - e.y, p.x - e.x);
     e.setFlipX(Math.cos(angle) < 0);
@@ -70,7 +70,7 @@ const brute: Ai = (e, _dt, w) => {
       onDone: (tg) => {
         e.ai.state = 0;
         e.ai.readyAt = w.time + (ap.cooldown ?? 2.4);
-        if (e.dying || !e.active || e.isFrozenAt(w.time)) return;
+        if (e.dying || !e.active || e.isDisabledAt(w.time)) return;
         e.play(`${e.animBase}:strike`, true);
         e.once('animationcomplete', () => !e.dying && e.play(`${e.animBase}:move`, true));
         audio.play('knight_slam');
@@ -113,7 +113,7 @@ const kite: Ai = (e, dt, w) => {
     e.desiredVy = (dx / d) * s * 0.7 * e.ai.strafe;
   }
   e.ai.castTimer = (e.ai.castTimer ?? 1 + w.rng.next() * 2) - dt;
-  if (e.ai.castTimer <= 0 && !e.ai.casting && d < range * 1.8 && onScreen(w, e.x, e.y) && !e.isFrozenAt(w.time)) {
+  if (e.ai.castTimer <= 0 && !e.ai.casting && d < range * 1.8 && onScreen(w, e.x, e.y) && !e.isDisabledAt(w.time)) {
     e.ai.casting = 1;
     e.ai.castTimer = ap.castInterval ?? 2.8;
     const angle = Math.atan2(p.y - 8 - (e.y - 14), p.x - e.x);
@@ -131,7 +131,7 @@ const kite: Ai = (e, dt, w) => {
       color: 0xff3377,
       onDone: () => {
         e.ai.casting = 0;
-        if (e.dying || !e.active || e.isFrozenAt(w.time)) return;
+        if (e.dying || !e.active || e.isDisabledAt(w.time)) return;
         e.play(`${e.animBase}:move`, true);
         audio.play('enemy_shoot');
         w.projectiles.spawn({
@@ -182,7 +182,7 @@ const elite: Ai = (e, dt, w) => {
   if (!p) return void (e.desiredVx = e.desiredVy = 0);
   const d = Math.hypot(p.x - e.x, p.y - e.y);
   e.ai.next ??= t + 2;
-  if (t >= e.ai.next && onScreen(w, e.x, e.y, 0) && !e.isFrozenAt(t)) {
+  if (t >= e.ai.next && onScreen(w, e.x, e.y, 0) && !e.isDisabledAt(t)) {
     e.ai.next = t + (ap.attackCooldown ?? 3.2);
     const choice = d < (ap.slamRadius ?? 60) * 0.9 ? 'slam' : w.rng.pick(['charge', 'burst', d < 120 ? 'slam' : 'charge'] as const);
     e.ai.busy = 1;
@@ -203,7 +203,7 @@ const elite: Ai = (e, dt, w) => {
         color: 0xff66cc,
         onDone: () => {
           e.ai.busy = 0;
-          if (e.dying || e.isFrozenAt(w.time)) return;
+          if (e.dying || e.isDisabledAt(w.time)) return;
           const sp = ap.chargeSpeed ?? 260;
           e.ai.charging = 1;
           e.ai.cvx = Math.cos(angle) * sp;
@@ -226,7 +226,7 @@ const elite: Ai = (e, dt, w) => {
         },
         onDone: (tg) => {
           e.ai.busy = 0;
-          if (e.dying || e.isFrozenAt(w.time)) return;
+          if (e.dying || e.isDisabledAt(w.time)) return;
           e.play(`${e.animBase}:attack`, true);
           e.once('animationcomplete', () => !e.dying && e.play(`${e.animBase}:move`, true));
           audio.play('boss_slam', { volume: 0.7 });
@@ -251,7 +251,7 @@ const elite: Ai = (e, dt, w) => {
         },
         onDone: () => {
           e.ai.busy = 0;
-          if (e.dying || e.isFrozenAt(w.time)) return;
+          if (e.dying || e.isDisabledAt(w.time)) return;
           e.play(`${e.animBase}:attack`, true);
           e.once('animationcomplete', () => !e.dying && e.play(`${e.animBase}:move`, true));
           audio.play('enemy_shoot', { pitch: 0.6 });

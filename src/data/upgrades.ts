@@ -3,8 +3,9 @@
  * Every upgrade below changes real gameplay values read by the stat or ability systems.
  */
 import type { UpgradeDef } from './types';
+import { HOLLOW_UPGRADES } from './hollow';
 
-const PROJ_CHARS: UpgradeDef['characters'] = ['voidwalker', 'frost_witch'];
+const PROJ_CHARS: UpgradeDef['characters'] = ['voidwalker', 'frost_witch', 'hollow'];
 
 export const UPGRADES: UpgradeDef[] = [
   // ───────── General stat upgrades ─────────
@@ -64,6 +65,9 @@ export const UPGRADES: UpgradeDef[] = [
   { id: 'permafrost', name: 'Frozen Ground: Permafrost', icon: 'icon-frozen-ground', category: 'ability', characters: ['frost_witch'], maxStacks: 3, description: 'Frozen Ground freezes {0}% faster and lasts longer.', effects: [{ type: 'ability', ability: 'frozen_ground', param: 'buildup', op: 'mul', value: -0.15 }, { type: 'ability', ability: 'frozen_ground', param: 'duration', op: 'mul', value: 0.15 }] },
   { id: 'glacial_spikes', name: 'Frozen Ground: Glacial Spikes', icon: 'icon-frozen-ground', category: 'ability', characters: ['frost_witch'], minRarity: 'uncommon', maxStacks: 3, description: 'Frozen Ground spikes deal {0} damage every half second.', effects: [{ type: 'flag', ability: 'frozen_ground', flag: 'spikes' }, { type: 'ability', ability: 'frozen_ground', param: 'tickDamage', op: 'add', value: 5 }] },
   { id: 'zero_radius', name: 'Absolute Zero: Deep Winter', icon: 'icon-absolute-zero', category: 'ability', characters: ['frost_witch'], minRarity: 'rare', maxStacks: 2, description: 'Absolute Zero radius +{0}% and damage +{1}%.', effects: [{ type: 'ability', ability: 'absolute_zero', param: 'radius', op: 'mul', value: 0.12 }, { type: 'ability', ability: 'absolute_zero', param: 'damage', op: 'mul', value: 0.2 }] },
+
+  // ───────── The Hollow (data in hollow.ts) ─────────
+  ...HOLLOW_UPGRADES,
 ];
 
 export const UPGRADE_BY_ID: Record<string, UpgradeDef> = Object.fromEntries(UPGRADES.map((u) => [u.id, u]));

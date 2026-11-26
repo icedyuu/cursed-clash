@@ -1,5 +1,6 @@
 /** All abilities, defined as data. Behaviour modules in systems/abilities read these params. */
 import type { AbilityDef } from './types';
+import { HOLLOW_ABILITIES } from './hollow';
 
 const deg = (d: number): number => (d * Math.PI) / 180;
 
@@ -225,6 +226,9 @@ export const ABILITIES: Record<string, AbilityDef> = {
     sfx: 'none',
     params: { damage: 8, speed: 140, range: 300, radius: 2, knockback: 10, pierce: 0 },
   },
+
+  // ───────────── THE HOLLOW (data in hollow.ts) ─────────────
+  ...HOLLOW_ABILITIES,
 };
 
 export const getAbility = (id: string): AbilityDef => {
