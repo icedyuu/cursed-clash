@@ -5,6 +5,7 @@
  */
 import Phaser from 'phaser';
 import { normalize, normalizeMovement } from '../core/math';
+import { IS_TOUCH, touch } from '../ui/TouchControls';
 
 export interface PlayerIntent {
   moveX: number;
@@ -12,7 +13,9 @@ export interface PlayerIntent {
   aimX: number;
   aimY: number;
   /** Where the aim came from: mouse aims at a world point, others are directions. */
-  aimSource: 'mouse' | 'stick' | 'keys' | 'none';
+  aimSource: 'mouse' | 'stick' | 'keys' | 'auto' | 'none';
+  /** Touch auto-aim: world point of the targeted enemy (area abilities are placed there). */
+  aimTarget?: { x: number; y: number };
   attack: boolean;
   q: boolean;
   e: boolean;
@@ -197,6 +200,8 @@ export interface ControllerOptions {
   /** Returns the browser gamepad index this player uses right now, or -1. Re-evaluated every frame. */
   pad: () => number;
   autoAttack?: boolean;
+  /** Reads the on-screen touch controls (solo on phones/tablets). */
+  touch?: boolean;
 }
 
 /**
@@ -226,12 +231,32 @@ export class PlayerController {
       mx += st.x + dx;
       my += st.y + dy;
     }
+    const useTouch = !!this.opts.touch;
+    if (useTouch) {
+      mx += touch.moveX;
+      my += touch.moveY;
+    }
     const mv = normalizeMovement(mx, my);
     it.moveX = mv.x;
     it.moveY = mv.y;
 
     // ── aim ──
     let aimed = false;
+    if (useTouch) {
+      // auto-aim at the nearest enemy and keep firing while one is in range
+      const target = touch.aimProvider?.(origin.x, origin.y) ?? null;
+      if (target) {
+        const n = normalize(target.x - origin.x, target.y - (origin.y - 8));
+        if (n.x || n.y) {
+          it.aimX = n.x;
+          it.aimY = n.y;
+          it.aimSource = 'auto';
+          it.aimTarget = { x: target.x, y: target.y };
+          it.attack = true;
+          aimed = true;
+        }
+      }
+    }
     if (pad >= 0) {
       const rs = pads.stick(pad, 1, 0.3);
       if (rs.x || rs.y) {
@@ -256,7 +281,7 @@ export class PlayerController {
         aimed = true;
       }
     }
-    if (!aimed && s.usesMouse && !this.usingPad) {
+    if (!aimed && s.usesMouse && !this.usingPad && !useTouch) {
       const p = scene.input.activePointer;
       const { x: wx, y: wy } = pointerWorld(scene);
       const n = normalize(wx - origin.x, wy - origin.y);
@@ -268,7 +293,7 @@ export class PlayerController {
       }
       if (p.leftButtonDown()) it.attack = true;
     }
-    if (s.usesMouse && scene.input.activePointer.leftButtonDown()) {
+    if (s.usesMouse && !useTouch && scene.input.activePointer.leftButtonDown()) {
       this.usingPad = false;
       it.attack = true;
     }
@@ -299,6 +324,13 @@ export class PlayerController {
       it.ult ||= pads.wasPressed(pad, PAD.B) || pads.wasPressed(pad, PAD.LT);
       it.dash ||= pads.wasPressed(pad, PAD.A);
       it.pause ||= pads.wasPressed(pad, PAD.START);
+    }
+    if (useTouch) {
+      it.q ||= touch.consume('q');
+      it.e ||= touch.consume('e');
+      it.ult ||= touch.consume('ult');
+      it.dash ||= touch.consume('dash');
+      it.pause ||= touch.consume('pause');
     }
     if (this.opts.autoAttack) it.attack = true;
     return it;
@@ -389,4 +421,5 @@ export const createController = (player: 0 | 1, versus: boolean, autoAttack: boo
     scheme: versus ? (player === 0 ? SCHEME_P1 : SCHEME_P2) : SCHEME_SOLO,
     pad: versus ? () => padForPlayer(player) : soloPad,
     autoAttack,
+    touch: IS_TOUCH && !versus,
   });

@@ -6,6 +6,7 @@ import Phaser from 'phaser';
 import { ARENA, DEPTH, GAME_HEIGHT, GAME_WIDTH, IS_DEBUG } from '../game/GameConfig';
 import { GameManager, type GameMode, type PlayerSummary, type RunResult } from '../game/GameManager';
 import { createController, tickInput, keys } from '../game/InputManager';
+import { touch, touchOverlay } from '../ui/TouchControls';
 import { audio } from '../game/AudioManager';
 import { createRng, type Rng } from '../core/rng';
 import { SpatialGrid } from '../core/SpatialGrid';
@@ -30,6 +31,9 @@ import type { World } from '../systems/World';
 import { arenaLayout } from '../art/environmentArt';
 import { dist2 } from '../core/math';
 import { SceneManager } from '../game/SceneManager';
+
+/** Touch auto-aim reach in world pixels. */
+const AUTO_AIM_RANGE = 230;
 
 export class ArenaScene extends Phaser.Scene {
   mode: GameMode = 'solo';
@@ -59,7 +63,7 @@ export class ArenaScene extends Phaser.Scene {
   private near: Enemy[] = [];
   private fog: Phaser.GameObjects.Image[] = [];
   private propLights: { img: Phaser.GameObjects.Image; base: number; phase: number }[] = [];
-  private upgradeOpen = false;
+  upgradeOpen = false;
 
   constructor() {
     super('ArenaScene');
@@ -126,6 +130,21 @@ export class ArenaScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this);
     this.input.mouse?.disableContextMenu();
     this.game.events.on(Phaser.Core.Events.BLUR, this.autoPause, this);
+
+    // touch auto-aim: nearest living enemy within range (bosses preferred when close)
+    touch.aimProvider = (x, y) => {
+      let best: Enemy | null = null;
+      let bd = AUTO_AIM_RANGE * AUTO_AIM_RANGE;
+      for (const e of this.enemies) {
+        if (!e.active || e.dying) continue;
+        const d = (e.x - x) ** 2 + (e.y - y) ** 2 * 1.2 - (e.isBoss ? 2500 : 0);
+        if (d < bd) {
+          bd = d;
+          best = e;
+        }
+      }
+      return best ? { x: best.x, y: best.y - best.displayHeight * 0.35 } : null;
+    };
 
     this.scene.launch('HUDScene', { arena: this });
     audio.playMusic('battle');
@@ -479,6 +498,9 @@ export class ArenaScene extends Phaser.Scene {
 
   openPause(): void {
     if (this.ended) return;
+    // the intent that requested the pause is stale until the next poll; clear it so resuming
+    // doesn't immediately pause again
+    for (const p of this.players) p.intent.pause = false;
     audio.play('ui_select');
     this.scene.pause();
     this.scene.launch('PauseScene', { arena: this });
@@ -558,6 +580,8 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private cleanup(): void {
+    touch.aimProvider = null;
+    touchOverlay.hide();
     this.events.off('enemy-killed', this.onEnemyKilled, this);
     this.game.events.off(Phaser.Core.Events.BLUR, this.autoPause, this);
     this.telegraphs?.clear();

@@ -11,6 +11,7 @@ import { txt } from './widgets';
 import { GameManager } from '../game/GameManager';
 import type { Boss } from '../entities/Boss';
 import { audio } from '../game/AudioManager';
+import { IS_TOUCH, touchOverlay, type TouchSlotInfo } from './TouchControls';
 
 interface SlotView {
   slot: 'basic' | 'q' | 'e' | 'ult' | 'dash';
@@ -57,6 +58,7 @@ export class HUDScene extends Phaser.Scene {
   private boss: Boss | null = null;
   private bannerQueue: { text: string; color: string; sub?: string }[] = [];
   private bannerBusy = false;
+  private touchVisible = false;
 
   constructor() {
     super('HUDScene');
@@ -71,6 +73,7 @@ export class HUDScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.touchVisible = false;
     this.vignette = this.add.image(GAME_WIDTH / 2, GAME_HEIGHT / 2, 'ui-vignette').setDisplaySize(GAME_WIDTH, GAME_HEIGHT).setAlpha(0.85);
     this.lowHp = this.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0xff0022, 0).setOrigin(0);
     this.g = this.add.graphics();
@@ -131,6 +134,8 @@ export class HUDScene extends Phaser.Scene {
       const icon = this.add.image(x, y, 'icons', iconKey);
       const key = txt(this, x, y - 16, keyset[slot], { origin: [0.5, 0.5], color: COLORS.textDim });
       const cd = txt(this, x, y, '', { origin: [0.5, 0.5], color: '#ffffff' });
+      // on touch devices the on-screen buttons show cooldowns instead
+      if (IS_TOUCH && !versus) [frame, icon, key, cd].forEach((o) => o.setVisible(false));
       slots.push({ slot, x, y, frame, icon, key, cd });
     });
     return { p, slots, name, level, hpText, kills, barX, barY: 16, barW, mirrored, lastLevel: 1 };
@@ -196,6 +201,7 @@ export class HUDScene extends Phaser.Scene {
     } else this.killsText.setText(`KILLS ${a.players[0].kills}`);
     for (const v of this.views) this.drawPlayer(v, g);
     this.drawBoss(g);
+    this.updateTouch();
     const solo = a.players[0];
     if (a.mode === 'solo' && solo.alive && solo.hp / solo.stats.maxHp < 0.3) {
       this.vignette.setTint(0xff3355).setAlpha(0.7 + Math.sin(a.runTime * 6) * 0.15);
@@ -212,6 +218,34 @@ export class HUDScene extends Phaser.Scene {
     g.fillStyle(0xffffff, 0.25).fillRect(mirrored ? x + w - fw : x, y, fw, 1);
   }
 
+  /** Shows the touch controls only during live solo gameplay and feeds them cooldowns. */
+  private updateTouch(): void {
+    if (!IS_TOUCH) return;
+    const a = this.arena;
+    const p = a.players[0];
+    const live = a.mode === 'solo' && !!p?.alive && !a.ended && !a.upgradeOpen && a.scene.isActive() && !a.scene.isPaused();
+    if (live !== this.touchVisible) {
+      this.touchVisible = live;
+      if (live) touchOverlay.show();
+      else touchOverlay.hide();
+    }
+    if (!live) return;
+    const cd = (slot: 'q' | 'e'): TouchSlotInfo => {
+      const inst = p.abilities[slot];
+      return {
+        icon: inst.def.icon,
+        ratio: this.arena.abilities.cooldownRatio(p, slot),
+        label: inst.cooldown > 0.2 ? (inst.cooldown < 10 ? inst.cooldown.toFixed(1) : `${Math.ceil(inst.cooldown)}`) : '',
+      };
+    };
+    touchOverlay.update({
+      q: cd('q'),
+      e: cd('e'),
+      ult: { icon: p.abilities.ult.def.icon, ratio: 1 - p.ultCharge / 100, label: p.ultReady ? '' : `${Math.floor(p.ultCharge)}%`, ready: p.ultReady },
+      dash: { icon: 'icon-dash', ratio: p.dashCooldown / p.stats.dashCooldown, label: p.dashCooldown > 0 ? p.dashCooldown.toFixed(1) : '' },
+    });
+  }
+
   private drawPlayer(v: PlayerView, g: Phaser.GameObjects.Graphics): void {
     const p = v.p;
     const hpRatio = p.hp / p.stats.maxHp;
@@ -226,6 +260,7 @@ export class HUDScene extends Phaser.Scene {
     }
     const t = this.arena.runTime;
     for (const s of v.slots) {
+      if (!s.frame.visible) continue;
       let ratio = 0;
       let label = '';
       if (s.slot === 'dash') {

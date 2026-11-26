@@ -6,6 +6,7 @@ import { GameManager } from '../game/GameManager';
 import { audio } from '../game/AudioManager';
 import { formatTime } from '../core/math';
 import { CHARACTER_ORDER } from '../data/characters';
+import { IS_TOUCH } from '../ui/TouchControls';
 
 export class MainMenuScene extends Phaser.Scene {
   private menu!: MenuList;
@@ -41,7 +42,7 @@ export class MainMenuScene extends Phaser.Scene {
     const st = GameManager.save.stats;
     const best = Math.max(0, ...Object.values(st.bestTime).map((v) => v ?? 0));
     txt(this, 170, 260, best > 0 ? `BEST SURVIVAL ${formatTime(best)}   RUNS ${st.runs}   KILLS ${st.totalKills}` : 'SURVIVE THE CURSE. OUTLAST YOUR RIVAL.', { origin: [0.5, 0.5], color: COLORS.textDim });
-    const hint = txt(this, GAME_WIDTH / 2, GAME_HEIGHT - 12, 'ARROWS/WASD + ENTER  -  MOUSE  -  GAMEPAD', { origin: [0.5, 0.5], color: COLORS.textDark });
+    const hint = txt(this, GAME_WIDTH / 2, GAME_HEIGHT - 12, IS_TOUCH ? 'TAP TO SELECT' : 'ARROWS/WASD + ENTER  -  MOUSE  -  GAMEPAD', { origin: [0.5, 0.5], color: COLORS.textDark });
     this.tweens.add({ targets: hint, alpha: 0.4, duration: 1200, yoyo: true, repeat: -1 });
     txt(this, GAME_WIDTH - 4, 4, 'v1.0', { origin: [1, 0], color: COLORS.textDark });
 

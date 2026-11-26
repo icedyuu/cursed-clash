@@ -12,6 +12,7 @@ import { menuIntent, tickInput } from '../game/InputManager';
 import { audio } from '../game/AudioManager';
 import { txt } from './widgets';
 import { previewChoice } from './upgradePreview';
+import { IS_TOUCH } from './TouchControls';
 
 interface Side {
   p: Player;
@@ -65,7 +66,7 @@ export class UpgradeScene extends Phaser.Scene {
       const side = this.makeSide(this.arena.players[0], 0, GAME_WIDTH);
       this.nextRoll(side);
     }
-    this.add.existing(txt(this, GAME_WIDTH / 2, GAME_HEIGHT - 14, this.versus ? 'P1: A/D + SPACE     P2: ARROWS + ENTER     PADS: D-PAD + A' : 'A/D OR ARROWS TO CHOOSE  -  SPACE/ENTER/CLICK TO TAKE', { origin: [0.5, 0.5], color: COLORS.textDark }));
+    this.add.existing(txt(this, GAME_WIDTH / 2, GAME_HEIGHT - 14, this.versus ? 'P1: A/D + SPACE     P2: ARROWS + ENTER     PADS: D-PAD + A' : IS_TOUCH ? 'TAP A CARD TO TAKE IT' : 'A/D OR ARROWS TO CHOOSE  -  SPACE/ENTER/CLICK TO TAKE', { origin: [0.5, 0.5], color: COLORS.textDark }));
   }
 
   private makeSide(p: Player, x0: number, width: number): Side {

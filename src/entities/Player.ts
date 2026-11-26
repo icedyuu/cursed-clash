@@ -282,6 +282,9 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (this.intent.aimSource === 'mouse') {
       const p = pointerWorld(this.scene);
       this.reticle.setTexture('ui-reticle-p1').setPosition(Math.round(p.x), Math.round(p.y)).setRotation(0);
+    } else if (this.intent.aimSource === 'auto' && this.intent.aimTarget) {
+      // touch auto-aim: mark the targeted enemy
+      this.reticle.setTexture('ui-reticle-p1').setPosition(Math.round(this.intent.aimTarget.x), Math.round(this.intent.aimTarget.y - 6)).setRotation(0);
     } else {
       this.reticle.setTexture('ui-arrow').setPosition(Math.round(this.x + this.aim.x * 18), Math.round(this.y - 10 + this.aim.y * 18)).setRotation(Math.atan2(this.aim.y, this.aim.x));
     }

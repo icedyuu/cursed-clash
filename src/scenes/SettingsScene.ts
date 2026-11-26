@@ -6,6 +6,7 @@ import { SceneManager } from '../game/SceneManager';
 import { GameManager } from '../game/GameManager';
 import { audio } from '../game/AudioManager';
 import type { Settings } from '../systems/SaveSystem';
+import { IS_TOUCH } from '../ui/TouchControls';
 
 type NumKey = 'masterVolume' | 'musicVolume' | 'sfxVolume';
 type BoolKey = 'screenShake' | 'damageNumbers' | 'autoAttack' | 'showFps';
@@ -65,7 +66,7 @@ export class SettingsScene extends Phaser.Scene {
     buttons.push(new Button(this, GAME_WIDTH / 2, 62 + items.length * 26 + 36, 140, 20, 'BACK', () => this.back()));
     this.menu = new MenuList(this, buttons);
     this.menu.onBack = () => this.back();
-    txt(this, GAME_WIDTH / 2, GAME_HEIGHT - 12, 'LEFT/RIGHT TO ADJUST  -  ENTER TO TOGGLE  -  SETTINGS SAVE AUTOMATICALLY', { origin: [0.5, 0.5], color: COLORS.textDark });
+    txt(this, GAME_WIDTH / 2, GAME_HEIGHT - 12, IS_TOUCH ? 'TAP TO CHANGE  -  SETTINGS SAVE AUTOMATICALLY' : 'LEFT/RIGHT TO ADJUST  -  ENTER TO TOGGLE  -  SETTINGS SAVE AUTOMATICALLY', { origin: [0.5, 0.5], color: COLORS.textDark });
     if (!this.overlay) SceneManager.fadeIn(this);
   }
 

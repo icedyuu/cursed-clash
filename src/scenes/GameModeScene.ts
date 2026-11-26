@@ -4,6 +4,7 @@ import { Button, MenuList, menuBackdrop, panel, txt } from '../ui/widgets';
 import { SceneManager } from '../game/SceneManager';
 import { CONTROLS_P2, CONTROLS_PAD, CONTROLS_SOLO } from '../ui/controlsText';
 import { pads } from '../game/InputManager';
+import { IS_TOUCH } from '../ui/TouchControls';
 
 export class GameModeScene extends Phaser.Scene {
   private menu!: MenuList;
@@ -21,6 +22,29 @@ export class GameModeScene extends Phaser.Scene {
       txt(this, x, 58, title, { font: 'title', origin: [0.5, 0.5], color });
       lines.forEach((l, i) => txt(this, x - 128, 74 + i * 11, l, { color: i === 0 ? COLORS.text : COLORS.textDim, wrap: 256 }));
     };
+    if (IS_TOUCH) {
+      // phones/tablets: solo only (versus needs keyboards or gamepads)
+      card(GAME_WIDTH / 2, 'SOLO SURVIVAL', COLORS.void, [
+        'SURVIVE ENDLESS CURSED WAVES.',
+        '',
+        'MOVE          LEFT THUMB (JOYSTICK)',
+        'ATTACK        AUTOMATIC + AUTO-AIM',
+        'ABILITIES     Q / E BUTTONS',
+        'ULTIMATE      ULT BUTTON (WHEN CHARGED)',
+        'DASH          DASH BUTTON',
+        '',
+        'LEVEL UP, BUILD SYNERGIES, SLAY THE',
+        'HOLLOW KING AND CHASE YOUR HIGHSCORE.',
+      ]);
+      const buttons = [
+        new Button(this, GAME_WIDTH / 2, 276, 180, 24, 'PLAY SOLO', () => SceneManager.fadeTo(this, 'CharacterSelectScene', { mode: 'solo' })),
+        new Button(this, GAME_WIDTH / 2, 318, 100, 20, 'BACK', () => SceneManager.fadeTo(this, 'MainMenuScene')),
+      ];
+      this.menu = new MenuList(this, buttons, true);
+      this.menu.onBack = () => SceneManager.fadeTo(this, 'MainMenuScene');
+      SceneManager.fadeIn(this);
+      return;
+    }
     card(165, 'SOLO SURVIVAL', COLORS.void, [
       'SURVIVE ENDLESS CURSED WAVES.',
       '',
@@ -52,6 +76,7 @@ export class GameModeScene extends Phaser.Scene {
 
   update(): void {
     const m = this.menu.update();
+    if (IS_TOUCH) return;
     if (m.down && this.menu.index < 2) this.menu.select(2);
     else if (m.up && this.menu.index === 2) this.menu.select(0);
     this.padInfo.setText(`${pads.connected.length} GAMEPAD${pads.connected.length === 1 ? '' : 'S'} CONNECTED`);

@@ -2,13 +2,14 @@
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../game/GameConfig';
 import { CHARACTERS, CHARACTER_ORDER } from '../data/characters';
-import { menuBackdrop, txt } from '../ui/widgets';
+import { Button, menuBackdrop, txt } from '../ui/widgets';
 import { buildCharacterDetails } from '../ui/CharacterSelection';
 import { SceneManager } from '../game/SceneManager';
 import { GameManager, type GameMode } from '../game/GameManager';
 import { menuIntent, tickInput } from '../game/InputManager';
 import { audio } from '../game/AudioManager';
 import type { CharacterId } from '../data/types';
+import { IS_TOUCH } from '../ui/TouchControls';
 
 interface Cursor {
   index: number;
@@ -56,6 +57,7 @@ export class CharacterSelectScene extends Phaser.Scene {
       s.setInteractive({ useHandCursor: true });
       s.on('pointerdown', () => this.pointerPick(i));
       s.on('pointerover', () => {
+        if (IS_TOUCH) return; // touch: first tap selects, second tap confirms
         if (!this.cursors[0].ready && this.cursors[0].index !== i) this.move(0, i - this.cursors[0].index);
       });
       this.sprites.push(s);
@@ -74,13 +76,18 @@ export class CharacterSelectScene extends Phaser.Scene {
       });
     }
     this.cursors.forEach((_, k) => this.refresh(k));
-    txt(this, GAME_WIDTH / 2, GAME_HEIGHT - 8, this.mode === 'versus' ? 'P1: A/D + SPACE    P2: ARROWS + ENTER    ESC: BACK' : 'ARROWS/A-D + ENTER/SPACE OR CLICK    ESC: BACK', { origin: [0.5, 0.5], color: COLORS.textDark });
+    txt(this, GAME_WIDTH / 2, GAME_HEIGHT - 8, this.mode === 'versus' ? 'P1: A/D + SPACE    P2: ARROWS + ENTER    ESC: BACK' : IS_TOUCH ? 'TAP A HERO TO VIEW  -  TAP AGAIN TO START' : 'ARROWS/A-D + ENTER/SPACE OR CLICK    ESC: BACK', { origin: [0.5, 0.5], color: COLORS.textDark });
+    if (IS_TOUCH) new Button(this, 44, GAME_HEIGHT - 12, 70, 16, 'BACK', () => SceneManager.fadeTo(this, 'GameModeScene'));
     SceneManager.fadeIn(this);
   }
 
   private pointerPick(i: number): void {
     const c = this.cursors[0];
     if (c.ready) return;
+    if (IS_TOUCH && c.index !== i) {
+      this.move(0, i - c.index);
+      return;
+    }
     c.index = i;
     this.refresh(0);
     this.confirm(0);

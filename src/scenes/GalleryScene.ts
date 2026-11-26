@@ -1,7 +1,7 @@
 /** Character Gallery: browse heroes, monsters and the boss with every animation state. */
 import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from '../game/GameConfig';
-import { menuBackdrop, panel, txt } from '../ui/widgets';
+import { Button, menuBackdrop, panel, txt } from '../ui/widgets';
 import { SceneManager } from '../game/SceneManager';
 import { CHARACTERS, CHARACTER_ORDER } from '../data/characters';
 import { ENEMIES } from '../data/enemies';
@@ -10,6 +10,7 @@ import { menuIntent, tickInput } from '../game/InputManager';
 import { audio } from '../game/AudioManager';
 import { CHARACTER_ANIMS } from '../art/anims';
 import { MONSTER_SPECS } from '../art/enemyArt';
+import { IS_TOUCH } from '../ui/TouchControls';
 
 interface Entry {
   name: string;
@@ -55,7 +56,8 @@ export class GalleryScene extends Phaser.Scene {
     ];
     this.index = 0;
     this.show();
-    txt(this, GAME_WIDTH / 2, GAME_HEIGHT - 10, 'LEFT/RIGHT: BROWSE   UP/DOWN: ANIMATION   ESC: BACK   (CLICK TO CYCLE)', { origin: [0.5, 0.5], color: COLORS.textDark });
+    txt(this, GAME_WIDTH / 2, GAME_HEIGHT - 10, IS_TOUCH ? 'TAP LEFT / RIGHT SIDE TO BROWSE' : 'LEFT/RIGHT: BROWSE   UP/DOWN: ANIMATION   ESC: BACK   (CLICK TO CYCLE)', { origin: [0.5, 0.5], color: COLORS.textDark });
+    if (IS_TOUCH) new Button(this, 44, GAME_HEIGHT - 12, 70, 16, 'BACK', () => SceneManager.fadeTo(this, 'MainMenuScene'));
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       if (p.y > GAME_HEIGHT - 30) return;
       this.cycle(p.x < GAME_WIDTH / 2 ? -1 : 1);

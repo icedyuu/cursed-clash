@@ -66,6 +66,24 @@ Versus does not just double the enemies. Instead it changes several values at on
 - Menus work with the keyboard (arrows/WASD + Enter/Space, Esc to go back), the mouse, and any gamepad.
 - Settings include an optional **auto-attack** for P1.
 
+### Phones and tablets (solo)
+
+On a touch device the game switches to touch controls automatically. You can force them on or off with `?touch=1` / `?touch=0`.
+
+- **Move:** put your left thumb anywhere on the left half of the screen. A joystick appears there and follows your thumb.
+- **Attack:** fully automatic, with **auto-aim** at the nearest enemy (bosses take priority). A reticle marks the current target. Area abilities such as Black Hole or Frozen Ground are placed on that target.
+- **Buttons (bottom right):** **Q**, **E**, **ULT** and **DASH**, each with a cooldown sweep. ULT glows when it is charged. **II** pauses.
+- **Menus:**
+  - Everything works by tapping.
+  - On character select, the first tap shows a hero's details and a second tap starts the run.
+  - Upgrade cards are taken with one tap.
+- **Screen:**
+  - Landscape is required. In portrait the game shows a "rotate your device" hint.
+  - The game fills the screen.
+  - On Android the first tap switches to fullscreen.
+  - On iPhone, use "Add to Home Screen" for fullscreen.
+- Versus is hidden on touch devices, because it needs keyboards or gamepads.
+
 ---
 
 ## Characters
@@ -225,6 +243,7 @@ An autopilot bot aims at the nearest enemy, kites, uses abilities and picks card
 - **Versus shares one screen.** The camera leash stops players from drifting more than a screen apart; there is no split-screen.
 - **Audio** is synthesized, and the exact sound varies slightly between browsers. Safari needs a click before any sound plays.
 - **Phaser chunk size.** The `phaser` chunk is about 1.5 MB (340 kB gzip). It is split out but not tree-shaken.
+- **Touch controls** were tested in an emulated phone (Chromium, Pixel 7, real touch events): multi-touch joystick plus buttons, upgrades, pause and resume, and the portrait hint. They have not been tested on a physical iPhone or Android device yet.
 - **No online multiplayer, controller rebinding or meta-progression unlocks.**
 
 ## Credits

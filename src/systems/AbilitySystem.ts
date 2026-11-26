@@ -91,7 +91,7 @@ export class AbilitySystem {
     const params = this.finalParams(p, inst, slot);
     const flags = this.flags(p, inst);
     const angle = Math.atan2(p.aim.y, p.aim.x);
-    const aimPoint = p.intent.aimSource === 'mouse' ? pointerWorld(w.scene) : null;
+    const aimPoint = p.intent.aimSource === 'mouse' ? pointerWorld(w.scene) : p.intent.aimSource === 'auto' ? (p.intent.aimTarget ?? null) : null;
     behavior({ w, p, inst, params, flags, aimX: p.aim.x, aimY: p.aim.y, angle, aimPoint });
     if (slot === 'ult') {
       p.ultCharge = 0;
