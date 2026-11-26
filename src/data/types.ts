@@ -47,7 +47,11 @@ export type AbilityParamKey =
   | 'damageBonus'
   | 'lifestealBonus'
   | 'waveDamage'
-  | 'shake';
+  | 'shake'
+  /** Basic-attack infusion rank (drives bigger, flashier visuals). */
+  | 'infusion'
+  /** Damage ratio of secondary hits (splits, bursts, echoes). */
+  | 'splashDamage';
 
 export type AbilityParams = Partial<Record<AbilityParamKey, number>>;
 
@@ -131,7 +135,9 @@ export interface UpgradeDef {
   maxStacks: number;
   requires?: string[];
   effects: UpgradeEffect[];
-  category: 'stat' | 'ability' | 'passive';
+  category: 'stat' | 'ability' | 'passive' | 'fusion';
+  /** Fusion: the upgrades (and ranks) that must be owned before this is offered. */
+  fusion?: { id: string; rank: number }[];
 }
 
 export interface SynergyDef {

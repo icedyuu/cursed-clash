@@ -243,6 +243,60 @@ const ICONS: Record<string, IconDraw> = {
     }
     p.circle(8, 8, 2, PAL.white);
   },
+  'icon-fusion-halo': (p) => {
+    p.circle(8, 8, 2, VL);
+    p.ring(8, 8, 6, PAL.void3);
+    p.circle(8, 2, 2, V);
+    p.circle(3, 11, 2, V);
+    p.circle(13, 11, 2, V);
+    p.px(8, 2, G);
+    p.px(3, 11, G);
+    p.px(13, 11, G);
+  },
+  'icon-fusion-singularity': (p) => {
+    p.circle(10, 8, 5, PAL.void3);
+    p.circle(10, 8, 3, PAL.outline);
+    p.ring(10, 8, 5, VL);
+    p.line(0, 5, 4, 7, V);
+    p.line(0, 11, 4, 9, V);
+    p.line(1, 8, 5, 8, G);
+  },
+  'icon-fusion-whirl': (p) => {
+    for (let a = 0; a < Math.PI * 2; a += 0.12) {
+      const r = 3 + a * 0.75;
+      p.px(8 + Math.cos(a) * r, 8 + Math.sin(a) * r, a > 4 ? RL : R);
+    }
+    p.line(6, 10, 10, 6, S);
+    p.px(8, 8, G);
+  },
+  'icon-fusion-geyser': (p) => {
+    p.ellipse(8, 13, 6, 2, PAL.blood2);
+    p.rect(6, 4, 4, 9, R);
+    p.rect(7, 3, 2, 9, RL);
+    p.px(4, 3, R);
+    p.px(12, 2, R);
+    p.px(3, 6, RL);
+    p.px(13, 6, RL);
+    p.px(8, 1, G);
+  },
+  'icon-fusion-comet': (p) => {
+    p.line(1, 14, 9, 6, PAL.frost2, 2);
+    p.line(3, 14, 10, 7, FL);
+    p.circle(11, 5, 4, F);
+    p.circle(11, 5, 2, FL);
+    p.px(11, 4, PAL.white);
+    p.px(5, 7, G);
+  },
+  'icon-fusion-aura': (p) => {
+    p.ellipse(8, 9, 7, 6, PAL.frost1);
+    p.ring(8, 9, 6, F);
+    p.circle(8, 9, 2, FL);
+    for (let i = 0; i < 6; i++) {
+      const a = (i * Math.PI) / 3;
+      p.px(8 + Math.cos(a) * 4, 9 + Math.sin(a) * 4, PAL.white);
+    }
+    p.px(8, 1, G);
+  },
   'icon-dash': (p) => {
     p.poly([[6, 3], [14, 8], [6, 13]], PAL.snow);
     p.line(1, 5, 5, 5, PAL.snowShade);

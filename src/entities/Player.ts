@@ -22,6 +22,8 @@ export interface AbilityInstance {
   def: AbilityDef;
   cooldown: number;
   maxCooldown: number;
+  /** Successful casts this run (drives "every Nth attack" fusions). */
+  casts: number;
 }
 
 interface TimedBuff {
@@ -109,7 +111,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   }
 
   private makeAbility(id: string): AbilityInstance {
-    return { def: getAbility(id), cooldown: 0, maxCooldown: 1 };
+    return { def: getAbility(id), cooldown: 0, maxCooldown: 1, casts: 0 };
   }
 
   get theme() {

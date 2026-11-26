@@ -48,6 +48,7 @@ export const isUpgradeAvailable = (build: BuildState, up: UpgradeDef): boolean =
   if (up.characters && !up.characters.includes(build.character)) return false;
   if ((build.stacks[up.id] ?? 0) >= up.maxStacks) return false;
   if (up.requires && !up.requires.every((r) => (build.stacks[r] ?? 0) > 0)) return false;
+  if (up.fusion && !up.fusion.every((f) => (build.stacks[f.id] ?? 0) >= f.rank)) return false;
   return true;
 };
 
@@ -62,6 +63,17 @@ export const rollRarity = (rng: Rng, up: UpgradeDef, floor: Rarity = 'common', l
   const picked = rng.weighted(options, (r) => RARITIES[r].weight * (1 + luck * tier(r)));
   return picked ?? options[0];
 };
+
+/** Fusions that taking this upgrade moves closer (not yet owned), with progress after the pick. */
+export const fusionProgress = (build: BuildState, upgradeId: string): { fusion: UpgradeDef; have: number; need: number }[] =>
+  UPGRADES.filter((u) => u.fusion && !(build.stacks[u.id] > 0) && isCharOk(build, u) && u.fusion.some((f) => f.id === upgradeId && (build.stacks[f.id] ?? 0) < f.rank)).map((u) => {
+    const parts = u.fusion!;
+    const need = parts.reduce((a, f) => a + f.rank, 0);
+    const have = parts.reduce((a, f) => a + Math.min(f.rank, (build.stacks[f.id] ?? 0) + (f.id === upgradeId ? 1 : 0)), 0);
+    return { fusion: u, have, need };
+  });
+
+const isCharOk = (build: BuildState, up: UpgradeDef): boolean => !up.characters || up.characters.includes(build.character);
 
 export const wouldCompleteSynergy = (build: BuildState, upgradeId: string): SynergyDef | undefined =>
   SYNERGIES.find(
@@ -84,7 +96,13 @@ export const rollChoices = (
 ): UpgradeChoice[] => {
   const pool = availableUpgrades(build);
   const chosen: UpgradeChoice[] = [];
-  const remaining = [...pool];
+  // An unlocked fusion is always offered (first card) until it is taken.
+  const fusions = pool.filter((u) => u.category === 'fusion');
+  if (fusions.length > 0 && count > 0) {
+    const f = rng.pick(fusions);
+    chosen.push({ upgrade: f, rarity: 'legendary' });
+  }
+  const remaining = pool.filter((u) => u.category !== 'fusion');
   while (chosen.length < count && remaining.length > 0) {
     const up = rng.weighted(remaining, (u) => {
       let w = u.category === 'stat' ? 1 : 1.25;
@@ -113,7 +131,7 @@ export const scaledValue = (effect: UpgradeEffect, rarity: Rarity): number => {
 };
 
 const PERCENT_ADD_STATS: StatKey[] = ['critChance', 'critDamage', 'lifesteal'];
-const PERCENT_ADD_PARAMS: AbilityParamKey[] = ['chance', 'ratio', 'slow'];
+const PERCENT_ADD_PARAMS: AbilityParamKey[] = ['chance', 'ratio', 'slow', 'splashDamage'];
 
 export const formatEffectValue = (effect: UpgradeEffect, rarity: Rarity): string => {
   const v = scaledValue(effect, rarity);
