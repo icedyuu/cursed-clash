@@ -9,6 +9,7 @@ import type { Enemy } from '../entities/Enemy';
 import type { World } from './World';
 import { ARENA } from '../game/GameConfig';
 import { dist2 } from '../core/math';
+import { onMindLashHit } from './abilities/psychic';
 
 export class ProjectileSystem {
   readonly group: Phaser.Physics.Arcade.Group;
@@ -103,6 +104,7 @@ export class ProjectileSystem {
       if (p.splash > 0 && p.flags.has('burst') && p.abilityId === 'frost_shard') {
         w.combat.explode(p.x, p.y, 22, p.damage * p.splash, p.owner, 'frost_burst', e, 'frost');
       }
+      if (p.abilityId === 'mind_lash') onMindLashHit(p, e, w);
       const explodeNow = p.flags.has('explode') && (p.pierce <= 0 || p.flags.has('explodeOnPierce'));
       if (explodeNow) w.combat.explode(p.x, p.y, p.explosionRadius, p.damage * p.explosionDamage, p.owner, p.abilityId, e);
       if (p.flags.has('chain') && p.chainCount > 0) {

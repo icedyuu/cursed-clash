@@ -11,6 +11,7 @@ import { computeAbilityParams } from './UpgradeSystem';
 import { PLAYER_BALANCE } from '../data/balance';
 import { audio } from '../game/AudioManager';
 import type { ParticleKind } from './EffectsSystem';
+import { onKillForFragments, sealDamageMult } from './abilities/psychic';
 
 export interface HitOptions {
   owner: Player | null;
@@ -37,6 +38,7 @@ const EXPLOSION_THEME = {
   void: { fill: 0xb05cff, ring: 0xe0b3ff },
   blood: { fill: 0xc81e34, ring: 0xff8a8a },
   frost: { fill: 0x6fe3ff, ring: 0xd4f7ff },
+  psychic: { fill: 0x9d86e0, ring: 0xd9ccff },
 } as const;
 
 export class CombatSystem {
@@ -64,6 +66,7 @@ export class CombatSystem {
     const stats = p?.stats;
     let mult = 1;
     if (e.vulnerableUntil > w.time) mult *= 1.4;
+    mult *= sealDamageMult(e, w.time);
     // Frost Witch "Shatter": frozen enemies take +50% and burst into shards (once per freeze).
     let shatter = false;
     if (p && !o.isDot && p.def.id === 'frost_witch' && this.passiveFlags(p).includes('shatter') && e.isFrozenAt(w.time) && w.time >= e.shatterReadyAt) {
@@ -186,7 +189,7 @@ export class CombatSystem {
   }
 
   /** Area damage used by orbs, collapses, resonance. `exclude` already took the direct hit. */
-  explode(x: number, y: number, radius: number, damage: number, owner: Player | null, abilityId: string, exclude?: Enemy, theme: 'void' | 'blood' | 'frost' = 'void'): void {
+  explode(x: number, y: number, radius: number, damage: number, owner: Player | null, abilityId: string, exclude?: Enemy, theme: 'void' | 'blood' | 'frost' | 'psychic' = 'void'): void {
     const w = this.world();
     if (radius <= 0) return;
     const r = radius * (owner?.stats.area ?? 1);
@@ -226,6 +229,7 @@ export class CombatSystem {
       this.voidResonance(credited, e, w);
       if (wasBleeding && credited.def.id === 'blood_reaper' && this.passiveFlags(credited).includes('geyser')) this.bloodGeyser(credited, e.x, e.y, w);
     }
+    onKillForFragments(e, credited, w);
     if (e.isElite) {
       w.effects.shake(0.006, 250);
       w.effects.ring(e.x, e.y - 10, 8, 70, 0xff66cc, 0.6, 3);

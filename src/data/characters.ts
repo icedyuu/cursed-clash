@@ -49,6 +49,24 @@ export const CHARACTERS: Record<CharacterId, CharacterDef> = {
     abilities: { basic: 'frost_shard', q: 'ice_lance', e: 'frozen_ground', ult: 'absolute_zero', passive: 'frostbite' },
     ratings: { damage: 4, defense: 1, mobility: 3, control: 5 },
   },
+  hollow: {
+    id: 'hollow',
+    name: 'The Hollow',
+    title: 'Sealer of Outlets',
+    role: 'Psychic Sealer / Anti-Ability',
+    playstyle: 'Seal enemy minds, harvest their Psychic Fragments and ride the edge of Psychic Overload.',
+    lore: 'He has no face and no outlets of his own. He speaks only inside your head. Every mind he seals leaves a fragment in him; one of them is almost all of her.',
+    theme: 'psychic',
+    difficulty: 'High',
+    resource: { id: 'fragments', name: 'Psychic Fragments', color: 0xb9a3ff },
+    color: 0x9d86e0,
+    accent: 0x4a3a78,
+    stats: { maxHp: 95, moveSpeed: 88, dashDistance: 70, dashCooldown: 1.6, armor: 1, critChance: 0.05, pickupRange: 44 },
+    acceleration: 11,
+    dash: { style: 'drift', duration: 0.2 },
+    abilities: { basic: 'mind_lash', q: 'psychic_burst', e: 'outlet_seal', ult: 'last_remnant', passive: 'psychic_fragments' },
+    ratings: { damage: 4, defense: 2, mobility: 2, control: 5 },
+  },
 };
 
-export const CHARACTER_ORDER: CharacterId[] = ['voidwalker', 'blood_reaper', 'frost_witch'];
+export const CHARACTER_ORDER: CharacterId[] = ['voidwalker', 'blood_reaper', 'frost_witch', 'hollow'];

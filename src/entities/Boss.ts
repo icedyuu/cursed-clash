@@ -78,7 +78,7 @@ export class Boss extends Enemy {
       return;
     }
     const d = Math.hypot(p.x - this.x, p.y - this.y);
-    if (t >= this.nextAttackAt && !this.isFrozenAt(t)) {
+    if (t >= this.nextAttackAt && !this.isDisabledAt(t)) {
       this.chooseAttack(d, w);
       return;
     }
@@ -342,7 +342,7 @@ export class Boss extends Enemy {
       dur: 0.85,
       color: 0xff3355,
       onDone: () => {
-        if (this.dying || this.isFrozenAt(w.time)) return;
+        if (this.dying || this.isDisabledAt(w.time)) return;
         const sp = 330;
         this.charge = { vx: Math.cos(angle) * sp, vy: Math.sin(angle) * sp, until: w.time + len / sp };
         audio.play('rush', { pitch: 0.5 });

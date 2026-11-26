@@ -10,6 +10,7 @@ export const buildCharacterDetails = (scene: Phaser.Scene, def: CharacterDef, x:
   c.add(panel(scene, x, y, w, h, 'ui-panel-dark'));
   const color = `#${def.color.toString(16).padStart(6, '0')}`;
   c.add(txt(scene, x + 8, y + 7, def.name.toUpperCase(), { font: 'title', color }));
+  if (def.difficulty) c.add(txt(scene, x + w - 8, y + 7, `DIFFICULTY: ${def.difficulty.toUpperCase()}`, { origin: [1, 0], color: def.difficulty === 'High' ? '#ff8a8a' : COLORS.textDim }));
   c.add(txt(scene, x + 8, y + 19, `${def.role.toUpperCase()}  -  ${def.title.toUpperCase()}`, { color: COLORS.textDim }));
   const rows: [string, string][] = [
     ['PASSIVE', def.abilities.passive],

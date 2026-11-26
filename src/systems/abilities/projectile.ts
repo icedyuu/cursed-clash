@@ -2,12 +2,14 @@
 import type { Behavior, CastContext } from './context';
 import type { ParticleKind } from '../EffectsSystem';
 import { audio } from '../../game/AudioManager';
+import { choirVolley } from './psychic';
 
-const VISUALS: Record<string, { texture: string; trail: ParticleKind; scale?: number; light?: number; theme: 'void' | 'frost' }> = {
+const VISUALS: Record<string, { texture: string; trail: ParticleKind; scale?: number; light?: number; theme: 'void' | 'frost' | 'psychic' }> = {
   void_bolt: { texture: 'proj-void-bolt', trail: 'void', light: 0xb05cff, theme: 'void' },
   void_orb: { texture: 'proj-void-orb', trail: 'void', light: 0xb05cff, theme: 'void' },
   frost_shard: { texture: 'proj-frost-shard', trail: 'frost', light: 0x6fe3ff, theme: 'frost' },
   ice_lance: { texture: 'proj-ice-lance', trail: 'frost', light: 0x6fe3ff, theme: 'frost' },
+  mind_lash: { texture: 'proj-mind-lash', trail: 'psychic', light: 0x9d86e0, theme: 'psychic' },
 };
 
 /** Every Nth basic attack becomes the fusion super-shot. */
@@ -96,6 +98,7 @@ export const projectileBehavior: Behavior = (c) => {
   w.effects.burst(vis.trail, ox, oy, id === 'void_orb' || id === 'ice_lance' ? 8 : 3 + inf * 2, { angle, spread: 0.5 });
   if (basic && inf >= 2) w.effects.flashLight(ox, oy, vis.light ?? 0xffffff, 10 + inf * 4, 120, 0.6);
   if (basic && (flags.has('cannon') || flags.has('comet')) && inst.casts % FUSION_SHOT_EVERY === 0) fusionShot(c, ox, oy);
+  if (basic && flags.has('choir') && inst.casts % FUSION_SHOT_EVERY === 0) choirVolley(p, ox, oy, angle, params.damage ?? 8, w);
   if (params.shake) w.effects.shake(params.shake, 80);
   audio.play(inst.def.sfx);
 };

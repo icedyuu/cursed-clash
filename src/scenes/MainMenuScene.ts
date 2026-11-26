@@ -18,11 +18,13 @@ export class MainMenuScene extends Phaser.Scene {
   create(): void {
     menuBackdrop(this);
     // heroes standing in the mist
+    const gap = CHARACTER_ORDER.length > 3 ? 40 : 46;
     CHARACTER_ORDER.forEach((id, i) => {
-      const x = 470 + i * 46;
-      const s = this.add.sprite(x, 250 + (i === 1 ? 10 : 0), `hero-${id}`).setScale(2).setFlipX(true);
-      s.play({ key: `hero-${id}:idle`, startFrame: i });
-      this.add.image(x, 252 + (i === 1 ? 10 : 0), 'shadow-m').setScale(2).setDepth(-1).setAlpha(0.8);
+      const x = 470 + i * gap - (CHARACTER_ORDER.length > 3 ? 8 : 0);
+      const dy = i % 2 === 1 ? 10 : 0;
+      const s = this.add.sprite(x, 250 + dy, `hero-${id}`).setScale(2).setFlipX(true);
+      s.play({ key: `hero-${id}:idle`, startFrame: i % 4 });
+      this.add.image(x, 252 + dy, 'shadow-m').setScale(2).setDepth(-1).setAlpha(0.8);
       this.time.addEvent({ delay: 3000 + i * 1300, loop: true, callback: () => s.play(`hero-${id}:cast`).once('animationcomplete', () => s.play(`hero-${id}:idle`)) });
     });
     const king = this.add.sprite(520, 120, 'boss-king').setAlpha(0.18).setScale(2.2).setTint(0x6b3fd1);

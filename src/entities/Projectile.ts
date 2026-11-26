@@ -39,7 +39,7 @@ export interface ProjectileSpec {
   /** Damage ratio for secondary hits (splits, bursts). */
   splash?: number;
   /** Explosion theme for area hits caused by this projectile. */
-  theme?: 'void' | 'blood' | 'frost';
+  theme?: 'void' | 'blood' | 'frost' | 'psychic';
 }
 
 export class Projectile extends Phaser.Physics.Arcade.Sprite {
@@ -69,7 +69,7 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
   trailEvery = 0.03;
   trailCount = 1;
   splash = 0;
-  theme: 'void' | 'blood' | 'frost' = 'void';
+  theme: 'void' | 'blood' | 'frost' | 'psychic' = 'void';
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'proj-void-bolt', 0);

@@ -1,6 +1,7 @@
 /** 16x16 glyph icons for abilities and upgrades, packed in one atlas with named frames. */
 import { PixelCanvas } from './pixel';
 import { PAL } from './palette';
+import { HOLLOW_ICONS } from './hollowArt';
 
 type IconDraw = (p: PixelCanvas) => void;
 
@@ -303,6 +304,7 @@ const ICONS: Record<string, IconDraw> = {
     p.line(0, 8, 5, 8, PAL.snowShade);
     p.line(1, 11, 5, 11, PAL.snowShade);
   },
+  ...HOLLOW_ICONS,
 };
 
 export const ICON_SIZE = 16;

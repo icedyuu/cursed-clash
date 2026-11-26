@@ -44,6 +44,11 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   zoneBuildup = 0;
   bleeds: Bleed[] = [];
   bleedTick = 0;
+  /** The Hollow: Outlet Seal (special attacks interrupted) and Last Remnant restraint. */
+  sealedUntil = 0;
+  sealOwner: Player | null = null;
+  rootedUntil = 0;
+  sealMark?: Phaser.GameObjects.Image;
 
   /** Free-form per-AI state. */
   ai: Record<string, number> = {};
@@ -74,6 +79,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.desiredVx = this.desiredVy = this.knockVx = this.knockVy = this.pullVx = this.pullVy = 0;
     this.slowAmount = this.slowUntil = this.frostStacks = this.frostUntil = this.frozenUntil = this.frostSlow = 0;
     this.shatterReadyAt = this.vulnerableUntil = this.zoneBuildup = 0;
+    this.sealedUntil = this.rootedUntil = 0;
+    this.sealOwner = null;
+    this.sealMark?.setVisible(false);
     this.bleeds.length = 0;
     this.bleedTick = 0;
     this.ai = {};
@@ -107,8 +115,38 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     return this.frozenUntil > t;
   }
 
+  /** Frozen, sealed or restrained enemies cannot start (or finish) special attacks. */
+  isDisabledAt(t: number): boolean {
+    return this.frozenUntil > t || this.sealedUntil > t || this.rootedUntil > t;
+  }
+
+  isSealedAt(t: number): boolean {
+    return this.sealedUntil > t;
+  }
+
+  /** Control duration multiplier: bosses and elites shrug control off faster. */
+  controlResist(bossResist: number, eliteResist: number): number {
+    return this.isBoss ? bossResist : this.isElite ? eliteResist : 1;
+  }
+
+  /** Outlet Seal. `duration` is already resist-scaled. */
+  seal(duration: number, t: number, owner: Player | null): void {
+    // a seal without owner (her restraint) keeps an active Outlet Seal's owner, clears a stale one
+    if (owner) this.sealOwner = owner;
+    else if (this.sealedUntil <= t) this.sealOwner = null;
+    this.sealedUntil = Math.max(this.sealedUntil, t + duration);
+    if (!this.sealMark) this.sealMark = this.scene.add.image(this.x, this.y, 'fx-seal').setDepth(DEPTH.numbers - 3);
+    this.sealMark.setVisible(true).setAlpha(1).setScale(1.6);
+    this.scene.tweens.add({ targets: this.sealMark, scale: 1, duration: 220, ease: 'Back.easeOut' });
+  }
+
+  /** Held in place by her hair (Last Remnant). `duration` is already resist-scaled. */
+  root(duration: number, t: number): void {
+    this.rootedUntil = Math.max(this.rootedUntil, t + duration);
+  }
+
   slowFactorAt(t: number): number {
-    if (this.frozenUntil > t) return 0;
+    if (this.frozenUntil > t || this.rootedUntil > t) return 0;
     let s = this.slowUntil > t ? this.slowAmount : 0;
     if (this.frostUntil > t) s = Math.max(s, this.frostSlow);
     return Math.max(0.15, 1 - Math.min(0.85, s));
@@ -136,7 +174,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     const t = w.time;
     const body = this.body as Phaser.Physics.Arcade.Body;
     const slow = this.slowFactorAt(t);
-    const frozen = this.frozenUntil > t;
+    const frozen = this.frozenUntil > t || this.rootedUntil > t;
     // knockback & pull decay exponentially
     const decay = Math.exp(-dt * 9);
     this.knockVx *= decay;
@@ -151,12 +189,21 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setDepth(DEPTH.entities + this.y);
     this.shadow.setPosition(this.x, this.y + 1);
     if (this.flashUntil > t) this.setTintFill(0xffffff);
+    else if (this.rootedUntil > t) this.setTint(Math.floor(t * 18 + this.spawnTime * 7) % 3 === 0 ? 0xffffff : 0x6f5f9a);
     else if (frozen) this.setTint(0x9feaff);
     else if (this.frostUntil > t && this.frostStacks > 0) this.setTint(0xc8f4ff);
+    else if (this.sealedUntil > t) this.setTint(0xa898c8);
     else if (this.vulnerableUntil > t) this.setTint(0xe0b3ff);
     else if (this.isElite) this.setTint(0xffe0ea);
     else this.clearTint();
-    if (frozen) this.anims.pause();
+    if (this.sealMark?.visible) {
+      if (this.sealedUntil > t) {
+        const left = this.sealedUntil - t;
+        this.sealMark.setPosition(Math.round(this.x), Math.round(this.y - this.displayHeight * 0.85 - 7)).setAlpha(left < 0.8 ? (Math.floor(t * 12) % 2 ? 0.3 : 0.9) : 0.9);
+        this.sealMark.setDepth(DEPTH.numbers - 3);
+      } else this.sealMark.setVisible(false);
+    }
+    if (frozen && this.frozenUntil > t) this.anims.pause();
     else if (this.anims.isPaused) this.anims.resume();
     if (this.hpBar && this.isElite) {
       const g = this.hpBar;
@@ -180,6 +227,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.clearTint();
     this.anims.resume();
     this.hpBar?.clear().setVisible(false);
+    this.sealMark?.setVisible(false);
     this.play(`${this.animBase}:death`, true);
     this.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => this.despawn());
     this.scene.tweens.add({ targets: this.shadow, alpha: 0, duration: 300 });
@@ -191,5 +239,6 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (body) body.enable = false;
     this.shadow?.setVisible(false);
     this.hpBar?.setVisible(false);
+    this.sealMark?.setVisible(false);
   }
 }

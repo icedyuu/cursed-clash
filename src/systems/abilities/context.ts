@@ -16,4 +16,5 @@ export interface CastContext {
   aimPoint: { x: number; y: number } | null;
 }
 
-export type Behavior = (c: CastContext) => void;
+/** Return `false` when nothing was cast (no cooldown is spent). */
+export type Behavior = (c: CastContext) => void | boolean;

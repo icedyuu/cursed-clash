@@ -3,8 +3,9 @@
  * Every upgrade below changes real gameplay values read by the stat or ability systems.
  */
 import type { UpgradeDef } from './types';
+import { HOLLOW_UPGRADES } from './hollow';
 
-const PROJ_CHARS: UpgradeDef['characters'] = ['voidwalker', 'frost_witch'];
+const PROJ_CHARS: UpgradeDef['characters'] = ['voidwalker', 'frost_witch', 'hollow'];
 
 export const UPGRADES: UpgradeDef[] = [
   // ───────── General stat upgrades ─────────
@@ -77,6 +78,9 @@ export const UPGRADES: UpgradeDef[] = [
   { id: 'fusion_blood_geyser', name: 'Fusion: Blood Geyser', icon: 'icon-fusion-geyser', category: 'fusion', characters: ['blood_reaper'], minRarity: 'legendary', maxStacks: 1, fusion: [{ id: 'hemorrhage', rank: 2 }, { id: 'deep_thirst', rank: 2 }], description: 'Bleeding enemies erupt in a blood geyser when they die, damaging nearby enemies and healing you.', effects: [{ type: 'flag', ability: 'bloodlust', flag: 'geyser' }] },
   { id: 'fusion_comet', name: 'Fusion: Glacial Comet', icon: 'icon-fusion-comet', category: 'fusion', characters: ['frost_witch'], minRarity: 'legendary', maxStacks: 1, fusion: [{ id: 'shard_glacier', rank: 3 }, { id: 'lance_power', rank: 2 }], description: 'Every 5th Frost Shard is a huge ice comet that pierces everything and freezes what it hits.', effects: [{ type: 'flag', ability: 'frost_shard', flag: 'comet' }] },
   { id: 'fusion_winter_aura', name: "Fusion: Winter's Embrace", icon: 'icon-fusion-aura', category: 'fusion', characters: ['frost_witch'], minRarity: 'legendary', maxStacks: 1, fusion: [{ id: 'ground_radius', rank: 2 }, { id: 'deep_chill', rank: 1 }], description: 'A permanent blizzard swirls around you, chilling and freezing nearby enemies.', effects: [{ type: 'flag', ability: 'frostbite', flag: 'aura' }] },
+
+  // ───────── The Hollow (data in hollow.ts) ─────────
+  ...HOLLOW_UPGRADES,
 ];
 
 export const UPGRADE_BY_ID: Record<string, UpgradeDef> = Object.fromEntries(UPGRADES.map((u) => [u.id, u]));

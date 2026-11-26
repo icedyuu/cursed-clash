@@ -3,7 +3,7 @@ import Phaser from 'phaser';
 import { DEPTH } from '../game/GameConfig';
 import type { Player } from './Player';
 
-export type PickupKind = 'xp' | 'heart' | 'chest' | 'magnet' | 'crown';
+export type PickupKind = 'xp' | 'heart' | 'chest' | 'magnet' | 'crown' | 'fragment';
 
 export class Pickup extends Phaser.GameObjects.Sprite {
   kind: PickupKind = 'xp';

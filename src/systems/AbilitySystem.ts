@@ -13,6 +13,7 @@ import { projectileBehavior } from './abilities/projectile';
 import { meleeBehavior } from './abilities/melee';
 import { dashStrikeBehavior } from './abilities/movement';
 import { buffBehavior, freezeNovaBehavior, gravityWellBehavior, groundZoneBehavior } from './abilities/areas';
+import { lastRemnantBehavior, outletSealBehavior, psychicBurstBehavior, tickHollow } from './abilities/psychic';
 import { PLAYER_BALANCE } from '../data/balance';
 import { audio } from '../game/AudioManager';
 
@@ -24,6 +25,9 @@ const BEHAVIORS: Record<AbilityBehavior, Behavior | null> = {
   groundZone: groundZoneBehavior,
   buff: buffBehavior,
   freezeNova: freezeNovaBehavior,
+  psychicBurst: psychicBurstBehavior,
+  outletSeal: outletSealBehavior,
+  lastRemnant: lastRemnantBehavior,
   passive: null,
 };
 
@@ -71,6 +75,7 @@ export class AbilitySystem {
       a.cooldown = Math.max(0, a.cooldown - dt);
     }
     if (!p.alive) return;
+    if (p.psychic) tickHollow(p, dt, this.world());
     const it = p.intent;
     if (it.ult && p.ultReady) this.cast(p, 'ult');
     if (it.q) this.cast(p, 'q');
@@ -93,7 +98,10 @@ export class AbilitySystem {
     const angle = Math.atan2(p.aim.y, p.aim.x);
     inst.casts++;
     const aimPoint = p.intent.aimSource === 'mouse' ? pointerWorld(w.scene) : p.intent.aimSource === 'auto' ? (p.intent.aimTarget ?? null) : null;
-    behavior({ w, p, inst, params, flags, aimX: p.aim.x, aimY: p.aim.y, angle, aimPoint });
+    if (behavior({ w, p, inst, params, flags, aimX: p.aim.x, aimY: p.aim.y, angle, aimPoint }) === false) {
+      inst.casts--;
+      return false;
+    }
     if (slot === 'ult') {
       p.ultCharge = 0;
     } else {
